@@ -1,27 +1,24 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>College Chatbot</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
+<div id="chat"></div>
 
-<div class="chat-container">
-  <div class="chat-header">
-    <span>College Chatbot</span>
-    <span id="username"></span>
-  </div>
+<form id="chatForm">
+  <input id="q">
+  <button>Send</button>
+</form>
 
-  <div id="chat-box"></div>
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
 
-  <div class="chat-input">
-    <input id="query" placeholder="Ask about your notes...">
-    <button onclick="sendMessage()">➤</button>
-    <button onclick="logout()">Logout</button>
-
-  </div>
-</div>
-
-<script src="chat.js"></script>
-</body>
-</html>
+chatForm.onsubmit = async e => {
+  e.preventDefault();
+  const res = await fetch("http://127.0.0.1:8000/search",{
+    method:"POST",
+    headers:{"Content-Type":"application/x-www-form-urlencoded"},
+    body:new URLSearchParams({query:q.value})
+  });
+  const data = await res.json();
+  chat.innerHTML += `<b>You:</b> ${q.value}<br>`;
+  data.forEach(d=>{
+    chat.innerHTML += `<b>${d.filename}</b><br>${d.content}<hr>`;
+  });
+};
+</script>

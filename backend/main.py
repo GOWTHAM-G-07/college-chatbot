@@ -1,96 +1,39 @@
-from fastapi.staticfiles import StaticFiles
+from fastapi import FastAPI, Form, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-
-from fastapi import FastAPI, UploadFile, Form
-from fastapi.middleware.cors import CORSMiddleware
-from backend.db import conn, cursor
 from backend.auth import login_user
-from backend.ai_search import add_text, search
-from fastapi import Form, HTTPException
-import os
-from backend.db import cursor, conn
-
-import os
-from pypdf import PdfReader
+from backend.ai_search import add_text, search_docs, delete_doc
 
 app = FastAPI()
-# Allow frontend access
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Serve frontend
-app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"]
-)
-
-UPLOAD_DIR = "backend/uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
 @app.get("/")
 def home():
     return {"status": "College Chatbot API is running"}
 
-# LOGIN
 @app.post("/login")
 def login(email: str = Form(...), password: str = Form(...)):
     user = login_user(email, password)
     if not user:
-        return {"error": "Invalid credentials"}
-    return {
-        "name": user["name"],
-        "role": user["role"]
-    }
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return user
 
-# ADMIN UPLOAD
 @app.post("/admin/upload")
-def upload(title: str = Form(...), file: UploadFile = Form(...)):
-    path = os.path.join(UPLOAD_DIR, file.filename)
-    with open(path, "wb") as f:
-        f.write(file.file.read())
+async def upload(file: UploadFile = File(...)):
+    content = (await file.read()).decode(errors="ignore")
+    add_text(file.filename, content)
+    return {"message": "Uploaded"}
 
-    reader = PdfReader(path)
-    for page in reader.pages:
-        add_text(page.extract_text())
-
-    cursor.execute(
-        "INSERT INTO documents (title, subject, file_path, uploaded_by) VALUES (%s,%s,%s,%s)",
-        (title, "General", path, 1)
-    )
-    conn.commit()
-
-    return {"status": "uploaded"}
-
-# SEARCH (STUDENT)
-@app.post("/search")
-def search_docs(query: str = Form(...)):
-    results = search(query)
-    return {"results": results}
-@app.get("/admin/docs")
-def list_docs():
-    cursor.execute("SELECT id, title FROM documents")
-    return cursor.fetchall()
 @app.post("/admin/delete")
-def delete_doc(doc_id: int = Form(...)):
-    cursor.execute("SELECT filename FROM documents WHERE id=%s", (doc_id,))
-    row = cursor.fetchone()
+def delete(document_id: int = Form(...)):
+    delete_doc(document_id)
+    return {"message": "Deleted"}
 
-    if not row:
-        raise HTTPException(status_code=404, detail="Document not found")
-
-    file_path = f"backend/uploads/{row[0]}"
-    if os.path.exists(file_path):
-        os.remove(file_path)
-
-    cursor.execute("DELETE FROM documents WHERE id=%s", (doc_id,))
-    conn.commit()
-
-    return {"status": "deleted"}
+@app.post("/search")
+def search(query: str = Form(...)):
+    return search_docs(query)
