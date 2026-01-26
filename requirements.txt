@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+sqlalchemy
+mysql-connector-python
+bcrypt
+python-jose
+pypdf
+sentence-transformers
+faiss-cpu
+
