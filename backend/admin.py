@@ -1,19 +1,24 @@
-from PyPDF2 import PdfReader
-from backend.db import cursor, conn
-from backend.vector_store import rebuild_index
+from backend.db import get_connection
+import os
 
-def upload_pdf(title, file):
-    reader = PdfReader(file)
-    text = "".join(p.extract_text() or "" for p in reader.pages)
+def list_documents():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT id, title FROM documents")
+    data = cursor.fetchall()
+    conn.close()
+    return data
 
-    cursor.execute(
-        "INSERT INTO documents (title, content) VALUES (%s,%s)",
-        (title, text)
-    )
-    conn.commit()
-    rebuild_index()
+def delete_document(doc_id: int):
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
 
-def delete_doc(doc_id):
+    cursor.execute("SELECT file_path FROM documents WHERE id=%s", (doc_id,))
+    row = cursor.fetchone()
+
+    if row and os.path.exists(row["file_path"]):
+        os.remove(row["file_path"])
+
     cursor.execute("DELETE FROM documents WHERE id=%s", (doc_id,))
     conn.commit()
-    rebuild_index()
+    conn.close()

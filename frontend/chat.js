@@ -1,14 +1,20 @@
-async function sendMsg() {
-  const q = document.getElementById("question").value;
+function send() {
+  const q = document.getElementById("q").value;
+  if (!q) return;
 
-  const form = new FormData();
-  form.append("query", q);
+  add("You", q);
 
-  const res = await fetch("http://127.0.0.1:8000/chat", {
+  fetch("http://127.0.0.1:8000/chat", {
     method: "POST",
-    body: form
-  });
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({question: q})
+  })
+  .then(r => r.json())
+  .then(d => add("Bot", d.answer));
+}
 
-  const data = await res.json();
-  document.getElementById("reply").innerText = data.answer;
+function add(sender, msg) {
+  const box = document.getElementById("messages");
+  box.innerHTML += `<div class="${sender}"><b>${sender}:</b> ${msg}</div>`;
+  box.scrollTop = box.scrollHeight;
 }

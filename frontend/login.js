@@ -1,26 +1,38 @@
 async function login() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
-  const form = new FormData();
-  form.append("email", email);
-  form.append("password", password);
+    try {
+        const res = await fetch("http://127.0.0.1:8000/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                email: email,
+                password: password
+            })
+        });
 
-  const res = await fetch("http://127.0.0.1:8000/login", {
-    method: "POST",
-    body: form
-  });
+        const data = await res.json();
 
-  if (!res.ok) {
-    alert("Login failed");
-    return;
-  }
+        if (!res.ok || data.error) {
+            alert("Login failed");
+            return;
+        }
 
-  const data = await res.json();
+        // save token
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.role);
 
-  if (data.role === "admin") {
-    window.location = "admin.html";
-  } else {
-    window.location = "chat.html";
-  }
+        if (data.role === "admin") {
+            window.location.href = "/static/admin.html";
+        } else {
+            window.location.href = "/static/chat.html";
+        }
+
+    } catch (err) {
+        console.error(err);
+        alert("Server not reachable");
+    }
 }
