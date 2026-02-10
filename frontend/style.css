@@ -1,156 +1,56 @@
 body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #343541;
-}
-
-.center {
-  display: flex;
-  height: 100vh;
-  justify-content: center;
-  align-items: center;
-}
-
-.login-box {
-  background: #202123;
-  padding: 30px;
-  border-radius: 8px;
-  width: 300px;
-}
-
-.login-box h2 {
+  background: linear-gradient(135deg, #1e1e2f, #23233b);
+  font-family: Arial;
   color: white;
-  text-align: center;
 }
 
-.login-box input {
+.admin-card {
+  width: 400px;
+  margin: 100px auto;
+  background: #111;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.6);
+}
+
+.admin-card h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+input, button {
   width: 100%;
   padding: 10px;
   margin: 10px 0;
+  border-radius: 6px;
+  border: none;
 }
 
-.login-box button {
-  width: 100%;
-  padding: 10px;
+button {
   background: #10a37f;
-  border: none;
   color: white;
+  font-weight: bold;
   cursor: pointer;
 }
 
-.chat-container {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
+button:hover {
+  background: #0c7c5f;
 }
 
-.chat-header {
-  background: #202123;
-  color: white;
-  padding: 15px;
-  display: flex;
-  justify-content: space-between;
-}
-
-#chat-box {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
-}
-
-.message {
-  max-width: 70%;
-  padding: 12px;
-  margin-bottom: 10px;
+.toast {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  padding: 12px 20px;
   border-radius: 8px;
+  display: none;
+  color: white;
 }
 
-.user {
+.toast.success {
   background: #10a37f;
-  color: white;
-  margin-left: auto;
 }
 
-.bot {
-  background: #444654;
-  color: white;
-}
-
-.chat-input {
-  display: flex;
-  padding: 10px;
-  background: #202123;
-}
-
-.chat-input input {
-  flex: 1;
-  padding: 10px;
-}
-
-.chat-input button {
-  padding: 10px 20px;
-  background: #10a37f;
-  border: none;
-  color: white;
-}
-body {
-  margin: 0;
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: #343541;
-}
-#chat-box {
-  flex: 1;
-  padding: 30px;
-  overflow-y: auto;
-}
-.message {
-  max-width: 60%;
-  padding: 14px 16px;
-  margin-bottom: 14px;
-  border-radius: 10px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-}
-
-.user {
-  background: #10a37f;
-  color: white;
-  margin-left: auto;
-}
-
-.bot {
-  background: #444654;
-  color: #ececf1;
-  margin-right: auto;
-}
-
-.typing {
-  font-style: italic;
-  opacity: 0.7;
-}
-.chat-input {
-  display: flex;
-  padding: 12px;
-  background: #40414f;
-  border-top: 1px solid #2a2b32;
-}
-
-.chat-input input {
-  flex: 1;
-  padding: 14px;
-  border-radius: 8px;
-  border: none;
-  outline: none;
-  font-size: 15px;
-}
-
-.chat-input button {
-  margin-left: 10px;
-  padding: 0 18px;
-  background: #10a37f;
-  border: none;
-  border-radius: 8px;
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
+.toast.error {
+  background: #d9534f;
 }

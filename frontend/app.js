@@ -1,77 +1,27 @@
-function login() {
-  fetch("http://127.0.0.1:8000/login", {
-    method: "POST",
-    body: new URLSearchParams({
-      email: email.value,
-      password: password.value
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    localStorage.setItem("name", data.name);
-    window.location = "dashboard.html";
+async function login(){
+  let r = await fetch("http://127.0.0.1:8000/login",{
+    method:"POST",
+    headers:{"Content-Type":"application/x-www-form-urlencoded"},
+    body:new URLSearchParams({email, password})
   });
+  let d = await r.json();
+  localStorage.setItem("role", d.role);
+  location.href = d.role=="admin"?"admin.html":"chat.html";
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  if (document.getElementById("name")) {
-    document.getElementById("name").innerText =
-      localStorage.getItem("name");
-  }
-});
-
-function search() {
-  fetch("http://127.0.0.1:8000/search", {
-    method: "POST",
-    body: new URLSearchParams({ query: query.value })
-  })
-  .then(res => res.json())
-  .then(data => {
-    results.innerHTML = data.results.join("<hr>");
+async function send(){
+  let r = await fetch("http://127.0.0.1:8000/search",{
+    method:"POST",
+    headers:{"Content-Type":"application/x-www-form-urlencoded"},
+    body:new URLSearchParams({query:q.value})
   });
-}
-async function upload() {
-  const data = new FormData();
-  data.append("title", document.getElementById("title").value);
-  data.append("file", document.getElementById("file").files[0]);
-
-  await fetch("http://127.0.0.1:8000/admin/upload", {
-    method: "POST",
-    body: data
-  });
-
-  loadDocs();
+  let d = await r.json();
+  box.innerHTML += `<div>${d.answer}</div>`;
 }
 
-async function loadDocs() {
-  const res = await fetch("http://127.0.0.1:8000/admin/docs");
-  const docs = await res.json();
-
-  const ul = document.getElementById("docList");
-  ul.innerHTML = "";
-
-  docs.forEach(d => {
-    ul.innerHTML += `
-      <li>
-        ${d.title}
-        <button onclick="del(${d.id})">Delete</button>
-      </li>`;
-  });
+async function upload(){
+  let f=new FormData();
+  f.append("title",title.value);
+  f.append("file",file.files[0]);
+  await fetch("http://127.0.0.1:8000/admin/upload",{method:"POST",body:f});
 }
-
-async function del(id) {
-  await fetch("http://127.0.0.1:8000/admin/delete", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ doc_id: id })
-  });
-
-  loadDocs();
-}
-
-function logout() {
-  localStorage.clear();
-  window.location.href = "login.html";
-}
-
-loadDocs();

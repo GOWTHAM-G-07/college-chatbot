@@ -1,12 +1,18 @@
+from backend.db import get_connection
 import bcrypt
-from backend.db import cursor
 
-def login_user(email, password):
+def authenticate(email: str, password: str):
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
     cursor.execute(
-        "SELECT id,name,email,password_hash,role FROM users WHERE email=%s",
+        "SELECT * FROM users WHERE email=%s",
         (email,)
     )
     user = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
 
     if not user:
         return None
