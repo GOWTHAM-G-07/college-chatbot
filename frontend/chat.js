@@ -1,16 +1,30 @@
 function send() {
-  const q = document.getElementById("q").value;
+  const qInput = document.getElementById("q");
+  const q = qInput.value;
+
   if (!q) return;
 
   add("You", q);
 
-  fetch("http://127.0.0.1:8000/chat", {
+  fetch("/api/chat", {
     method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({question: q})
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      question: q
+    })
   })
-  .then(r => r.json())
-  .then(d => add("Bot", d.answer));
+  .then(response => response.json())
+  .then(data => {
+    add("Bot", data.answer);
+  })
+  .catch(error => {
+    add("Bot", "Error connecting to server.");
+    console.error(error);
+  });
+
+  qInput.value = "";
 }
 
 function add(sender, msg) {
