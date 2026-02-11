@@ -1,7 +1,8 @@
 from fastapi import UploadFile, HTTPException
 import os
 import PyPDF2
-from backend.db import get_connection
+from db import get_connection
+
 
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)

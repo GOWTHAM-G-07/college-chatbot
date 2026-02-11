@@ -6,15 +6,8 @@ function send() {
 
   add("You", q);
 
-  fetch("/api/chat", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      question: q
-    })
-  })
+  fetch("/chat")
+
   .then(response => response.json())
   .then(data => {
     add("Bot", data.answer);
