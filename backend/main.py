@@ -57,3 +57,5 @@ async def chat(data: dict):
     question = data.get("question")
     answer = search_docs(question)
     return {"answer": answer}
+if __name__ == "__main__":
+    uvicorn.run(app, ...)
