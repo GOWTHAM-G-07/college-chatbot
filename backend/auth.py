@@ -1,5 +1,6 @@
 # backend/auth.py
-from backend.db import get_connection
+from db import get_connection
+
 import bcrypt, jwt
 
 SECRET = "college_secret"

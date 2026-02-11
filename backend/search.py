@@ -1,5 +1,5 @@
 import re
-from backend.db import get_connection
+from db import get_connection
 
 def tokenize(text):
     return set(re.findall(r'\b[a-zA-Z]{3,}\b', text.lower()))

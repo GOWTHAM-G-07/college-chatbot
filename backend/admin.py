@@ -1,4 +1,5 @@
-from backend.db import get_connection
+from db import get_connection
+
 import os
 
 def list_documents():
