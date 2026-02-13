@@ -1,9 +1,13 @@
+const API_BASE = "https://college-chatbot-opdo.onrender.com";
+
 async function login() {
+
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
 
     try {
-        const res = await fetch("http://127.0.0.1:8000/login", {
+
+        const res = await fetch(`${API_BASE}/login`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -21,18 +25,19 @@ async function login() {
             return;
         }
 
-        // save token
         localStorage.setItem("token", data.token);
         localStorage.setItem("role", data.role);
 
         if (data.role === "admin") {
-            window.location.href = "/static/admin.html";
+            window.location.href = "/admin";
         } else {
-            window.location.href = "/static/chat.html";
+            window.location.href = "/chat";
         }
 
     } catch (err) {
+
         console.error(err);
         alert("Server not reachable");
+
     }
 }
