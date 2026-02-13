@@ -1,16 +1,20 @@
 {
   "routes": [
     {
-      "src": "/",
+      "src": "^/$",
       "dest": "/frontend/login.html"
     },
     {
-      "src": "/chat",
+      "src": "^/chat$",
       "dest": "/frontend/chat.html"
     },
     {
-      "src": "/admin",
+      "src": "^/admin$",
       "dest": "/frontend/admin.html"
+    },
+    {
+      "src": "^/(.*)$",
+      "dest": "/frontend/$1"
     }
   ]
 }
