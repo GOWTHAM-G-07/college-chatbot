@@ -20,8 +20,8 @@ async function login() {
 
         const data = await res.json();
 
-        if (!res.ok || data.error) {
-            alert("Login failed");
+        if (!res.ok) {
+            alert(data.error || "Login failed");
             return;
         }
 
@@ -36,8 +36,9 @@ async function login() {
 
     } catch (err) {
 
-        console.error(err);
+        console.error("ERROR:", err);
         alert("Server not reachable");
 
     }
+
 }
