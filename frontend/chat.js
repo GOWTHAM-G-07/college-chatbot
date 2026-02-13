@@ -1,24 +1,37 @@
-function send() {
-  const qInput = document.getElementById("q");
-  const q = qInput.value;
+async function send() {
+    const q = document.getElementById("q").value;
+    if (!q) return;
 
-  if (!q) return;
+    add("You", q);
 
-  add("You", q);
+    try {
+        const res = await fetch("https://college-chatbot-opdo.onrender.com", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                question: q
+            })
+        });
 
-  fetch("/chat")
+        const data = await res.json();
 
-  .then(response => response.json())
-  .then(data => {
-    add("Bot", data.answer);
-  })
-  .catch(error => {
-    add("Bot", "Error connecting to server.");
-    console.error(error);
-  });
+        add("Bot", data.answer);
 
-  qInput.value = "";
+    } catch (err) {
+        add("Bot", "Error connecting to server");
+    }
+
+    document.getElementById("q").value = "";
 }
+
+function add(sender, msg) {
+    const box = document.getElementById("messages");
+    box.innerHTML += `<div><b>${sender}:</b> ${msg}</div>`;
+    box.scrollTop = box.scrollHeight;
+}
+
 
 function add(sender, msg) {
   const box = document.getElementById("messages");
