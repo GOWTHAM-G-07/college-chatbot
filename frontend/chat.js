@@ -1,40 +1,43 @@
-async function send() {
-    const q = document.getElementById("q").value;
-    if (!q) return;
+async function sendQuestion(){
 
-    add("You", q);
+const question = document.getElementById("question").value
+const chatBox = document.getElementById("chatBox")
 
-    try {
-        const res = await fetch("https://college-chatbot-opdo.onrender.com", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                question: q
-            })
-        });
+if(!question) return
 
-        const data = await res.json();
+chatBox.innerHTML += `<div class="user">You: ${question}</div>`
 
-        add("Bot", data.answer);
+const aiMode = document.getElementById("aiMode").checked
 
-    } catch (err) {
-        add("Bot", "Error connecting to server");
-    }
+const mode = aiMode ? "ai" : "doc"
 
-    document.getElementById("q").value = "";
+try{
+
+const res = await fetch("/chat",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+question:question,
+mode:mode
+})
+
+})
+
+const data = await res.json()
+
+chatBox.innerHTML += `<div class="bot">Bot: ${data.answer}</div>`
+
+}catch{
+
+chatBox.innerHTML += `<div class="bot">Bot: Server error</div>`
+
 }
 
-function add(sender, msg) {
-    const box = document.getElementById("messages");
-    box.innerHTML += `<div><b>${sender}:</b> ${msg}</div>`;
-    box.scrollTop = box.scrollHeight;
-}
+document.getElementById("question").value=""
 
-
-function add(sender, msg) {
-  const box = document.getElementById("messages");
-  box.innerHTML += `<div class="${sender}"><b>${sender}:</b> ${msg}</div>`;
-  box.scrollTop = box.scrollHeight;
 }

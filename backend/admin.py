@@ -1,25 +1,32 @@
-from db import get_connection
+from backend.db import get_connection
 
-import os
 
 def list_documents():
+
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT id, title FROM documents")
-    data = cursor.fetchall()
+
+    cursor.execute("SELECT id, title, filename FROM documents")
+
+    docs = cursor.fetchall()
+
+    cursor.close()
     conn.close()
-    return data
 
-def delete_document(doc_id: int):
+    return docs
+
+
+def delete_document(doc_id):
+
     conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
 
-    cursor.execute("SELECT file_path FROM documents WHERE id=%s", (doc_id,))
-    row = cursor.fetchone()
+    cursor.execute(
+        "DELETE FROM documents WHERE id=%s",
+        (doc_id,)
+    )
 
-    if row and os.path.exists(row["file_path"]):
-        os.remove(row["file_path"])
-
-    cursor.execute("DELETE FROM documents WHERE id=%s", (doc_id,))
     conn.commit()
+
+    cursor.close()
     conn.close()

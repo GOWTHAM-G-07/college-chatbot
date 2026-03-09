@@ -1,11 +1,11 @@
-# backend/auth.py
-from db import get_connection
-
-import bcrypt, jwt
+from backend.db import get_connection
+import bcrypt
+import jwt
 
 SECRET = "college_secret"
 
 def authenticate(email: str, password: str):
+
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
@@ -13,6 +13,7 @@ def authenticate(email: str, password: str):
         "SELECT * FROM users WHERE email=%s",
         (email,)
     )
+
     user = cursor.fetchone()
 
     cursor.close()
@@ -25,7 +26,10 @@ def authenticate(email: str, password: str):
         return None
 
     token = jwt.encode(
-        {"id": user["id"], "role": user["role"]},
+        {
+            "id": user["id"],
+            "role": user["role"]
+        },
         SECRET,
         algorithm="HS256"
     )

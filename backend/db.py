@@ -1,11 +1,10 @@
 import mysql.connector
-import os
 
 def get_connection():
     return mysql.connector.connect(
-        host=os.getenv("DB_HOST"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        database=os.getenv("DB_NAME"),
-        auth_plugin="mysql_native_password"
+        host="127.0.0.1",   # use 127.0.0.1 instead of localhost
+        port=3306,
+        user="root",       # change if your user is different
+        password="Tamilsecondmom@26",
+        database="college_chatbot_db"
     )

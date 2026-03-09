@@ -1,41 +1,44 @@
 import os
 from fastapi import FastAPI, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
-# Import your modules
-from documents import upload_document
-from search import search_docs
-from admin import list_documents, delete_document
-from auth import authenticate
+from backend.documents import upload_document
+from backend.search import search_docs
+from backend.admin import list_documents, delete_document
+from backend.auth import authenticate
 
 app = FastAPI()
 
-# ----------------------------------------------------
-# CORS (IMPORTANT – allow Vercel frontend)
-# ----------------------------------------------------
+# -----------------------------
+# CORS FIX (Important)
+# -----------------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://college-chatbot.vercel.app",  # Replace with your Vercel URL
-        "http://localhost:3000"  # for local testing
-    ],
+    allow_origins=["*"],  # allow all for development
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ----------------------------------------------------
-# ROOT
-# ----------------------------------------------------
+# -----------------------------
+# Serve frontend
+# -----------------------------
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+# -----------------------------
+# Root
+# -----------------------------
 @app.get("/")
 def root():
-    return {"status": "College Chatbot Backend Running on Render"}
+    return {"status": "College Chatbot Backend Running"}
 
-# ----------------------------------------------------
-# LOGIN
-# ----------------------------------------------------
+# -----------------------------
+# Login
+# -----------------------------
 @app.post("/login")
 def login(data: dict):
+
     email = data.get("email")
     password = data.get("password")
 
@@ -45,14 +48,14 @@ def login(data: dict):
     result = authenticate(email, password)
 
     if not result:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise HTTPException(status_code=401, detail="Invalid login")
 
     return result
 
 
-# ----------------------------------------------------
-# ADMIN: Upload Document
-# ----------------------------------------------------
+# -----------------------------
+# Upload Document
+# -----------------------------
 @app.post("/admin/upload")
 async def admin_upload(
     title: str = Form(...),
@@ -64,9 +67,9 @@ async def admin_upload(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ----------------------------------------------------
-# ADMIN: List Documents
-# ----------------------------------------------------
+# -----------------------------
+# List Documents
+# -----------------------------
 @app.get("/admin/docs")
 def get_docs():
     try:
@@ -75,9 +78,9 @@ def get_docs():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ----------------------------------------------------
-# ADMIN: Delete Document
-# ----------------------------------------------------
+# -----------------------------
+# Delete Document
+# -----------------------------
 @app.delete("/admin/delete/{doc_id}")
 def remove_doc(doc_id: int):
     try:
@@ -87,31 +90,40 @@ def remove_doc(doc_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ----------------------------------------------------
-# CHAT
-# ----------------------------------------------------
+# -----------------------------
+# Chat
+# -----------------------------
 @app.post("/chat")
 def chat(data: dict):
+
     question = data.get("question")
+    mode = data.get("mode", "doc")
 
     if not question:
-        raise HTTPException(status_code=400, detail="Question is required")
+        raise HTTPException(status_code=400, detail="Question required")
 
-    try:
+    # DOCUMENT MODE
+    if mode == "doc":
         answer = search_docs(question)
-        return {"answer": answer}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
+    # AI MODE
+    elif mode == "ai":
+        from backend.ai_mode import ai_answer
+        answer = ai_answer(question)
 
-# ----------------------------------------------------
-# Render requires PORT binding
-# ----------------------------------------------------
+    else:
+        answer = "Invalid mode"
+
+    return {"answer": answer}
+# -----------------------------
+# Run server
+# -----------------------------
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
-        "main:app",
+        "backend.main:app",
         host="0.0.0.0",
         port=int(os.environ.get("PORT", 8000)),
-        reload=False
+        reload=True
     )

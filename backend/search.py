@@ -1,28 +1,51 @@
 import re
-from db import get_connection
+from backend.db import get_connection
+
 
 def tokenize(text):
-    return set(re.findall(r'\b[a-zA-Z]{3,}\b', text.lower()))
+    return re.findall(r'\b\w+\b', text.lower())
 
-def search_docs(question: str):
-    q_tokens = tokenize(question)
+
+def search_docs(question):
 
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT title, content FROM documents")
-    docs = cursor.fetchall()
-    conn.close()
 
-    best_score = 0
-    best_answer = "Sorry, I couldn't find an answer."
+    cursor.execute("SELECT content FROM documents")
+    docs = cursor.fetchall()
+
+    if not docs:
+        return "No documents uploaded."
+
+    question_tokens = tokenize(question)
+
+    results = []
 
     for doc in docs:
-        content = doc["content"] or ""
-        c_tokens = tokenize(content)
 
-        score = len(q_tokens & c_tokens)
-        if score > best_score:
-            best_score = score
-            best_answer = content[:800]  # return first part
+        content = doc["content"]
 
-    return best_answer
+        paragraphs = content.split("\n")
+
+        for para in paragraphs:
+
+            tokens = tokenize(para)
+
+            score = sum(tokens.count(word) for word in question_tokens)
+
+            if score > 0 and len(para) > 40:
+                results.append((score, para))
+
+    cursor.close()
+    conn.close()
+
+    if not results:
+        return "Answer not found in uploaded documents."
+
+    # sort by relevance
+    results.sort(reverse=True)
+
+    # take top 5 relevant paragraphs
+    best_paragraphs = [para for score, para in results[:5]]
+
+    return "\n\n".join(best_paragraphs)

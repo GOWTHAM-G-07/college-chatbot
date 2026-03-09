@@ -1,42 +1,52 @@
-from fastapi import UploadFile, HTTPException
 import os
-import PyPDF2
-from db import get_connection
+import pdfplumber
+from backend.db import get_connection
 
 
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+UPLOAD_FOLDER = "uploads"
 
-def upload_document(title: str, file: UploadFile, uploaded_by: int = 1):
-    if not file.filename.endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF allowed")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-    path = os.path.join(UPLOAD_DIR, file.filename)
 
-    with open(path, "wb") as f:
+def upload_document(title, file):
+
+    # save file
+    file_location = os.path.join(UPLOAD_FOLDER, file.filename)
+
+    with open(file_location, "wb") as f:
         f.write(file.file.read())
 
-    reader = PyPDF2.PdfReader(path)
-    content = ""
-    for page in reader.pages:
-        content += page.extract_text() or ""
+    # extract text
+    text = ""
 
+    with pdfplumber.open(file_location) as pdf:
+        for page in pdf.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text + "\n"
+
+    # connect database
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
-        INSERT INTO documents (filename, title, subject, file_path, uploaded_by, content)
-        VALUES (%s,%s,%s,%s,%s,%s)
-    """, (
+    query = """
+    INSERT INTO documents
+    (filename, title, subject, file_path, uploaded_by, content)
+    VALUES (%s,%s,%s,%s,%s,%s)
+    """
+
+    cursor.execute(query, (
         file.filename,
         title,
-        title,
-        path,
-        uploaded_by,
-        content
+        "general",
+        file_location,
+        1,
+        text
     ))
 
     conn.commit()
+
+    cursor.close()
     conn.close()
 
-    return {"message": "Uploaded successfully"}
+    return {"message": "Document uploaded successfully"}

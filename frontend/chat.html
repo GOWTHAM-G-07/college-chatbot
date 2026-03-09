@@ -1,20 +1,93 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-  <title>College Chatbot</title>
-  <link rel="stylesheet" href="chat.css">
+<title>College Chatbot</title>
+<link rel="stylesheet" href="style.css">
+
+<style>
+
+body{
+font-family: Arial;
+background:#0f172a;
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+.chat-container{
+width:600px;
+background:#1e293b;
+padding:20px;
+border-radius:10px;
+}
+
+.chat-box{
+height:350px;
+overflow-y:auto;
+background:#020617;
+padding:10px;
+border-radius:6px;
+margin-bottom:10px;
+}
+
+.message{
+margin:10px 0;
+}
+
+.user{
+color:#38bdf8;
+}
+
+.bot{
+color:#22c55e;
+}
+
+input{
+width:75%;
+padding:10px;
+border:none;
+border-radius:5px;
+}
+
+button{
+padding:10px;
+background:#38bdf8;
+border:none;
+border-radius:5px;
+cursor:pointer;
+}
+
+.mode{
+margin-top:10px;
+}
+
+</style>
 </head>
+
 <body>
 
-<div class="chatbox">
-  <div id="messages"></div>
+<div class="chat-container">
 
-  <div class="input-box">
-    <input id="q" placeholder="Ask your question...">
-    <button onclick="send()">Send</button>
-  </div>
+<h2>College Chatbot</h2>
+
+<div id="chatBox" class="chat-box"></div>
+
+<input id="question" placeholder="Ask something...">
+<button onclick="sendQuestion()">Send</button>
+
+<div class="mode">
+<label>
+<input type="checkbox" id="aiMode">
+AI Mode
+</label>
+</div>
+
 </div>
 
 <script src="chat.js"></script>
+
 </body>
 </html>

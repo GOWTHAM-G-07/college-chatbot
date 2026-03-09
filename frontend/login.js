@@ -1,5 +1,3 @@
-const API_BASE = "https://college-chatbot-opdo.onrender.com";
-
 async function login() {
 
     const email = document.getElementById("email").value;
@@ -7,7 +5,7 @@ async function login() {
 
     try {
 
-        const res = await fetch(`${API_BASE}/login`, {
+        const res = await fetch("http://127.0.0.1:8000/login", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -21,24 +19,26 @@ async function login() {
         const data = await res.json();
 
         if (!res.ok) {
-            alert(data.error || "Login failed");
+            alert(data.detail || "Login failed");
             return;
         }
 
         localStorage.setItem("token", data.token);
         localStorage.setItem("role", data.role);
 
+        alert("Login successful");
+
         if (data.role === "admin") {
-            window.location.href = "/admin";
+            window.location.href = "/static/admin.html";
         } else {
-            window.location.href = "/chat";
+            window.location.href = "/static/chat.html";
         }
 
-    } catch (err) {
+    } catch (error) {
 
-        console.error("ERROR:", err);
-        alert("Server not reachable");
+        console.error(error);
+
+        alert("Cannot connect to backend server");
 
     }
-
 }
