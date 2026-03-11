@@ -1,30 +1,48 @@
 import os
-from fastapi import FastAPI, UploadFile, Form, HTTPException
+from fastapi import FastAPI, UploadFile, Form, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from backend.documents import upload_document
 from backend.search import search_docs
 from backend.admin import list_documents, delete_document
-from fastapi import FastAPI
 from backend.auth import router as auth_router
+from backend.auth import verify_token
+from backend.vector_store import rebuild_index
+
 app = FastAPI()
-app.include_router(auth_router, prefix="/auth")
+
 # -----------------------------
-# CORS FIX (Important)
+# Load FAISS index on startup
+# -----------------------------
+@app.on_event("startup")
+def startup_event():
+    rebuild_index()
+
+
+# -----------------------------
+# Auth Router
+# -----------------------------
+app.include_router(auth_router, prefix="/auth")
+
+
+# -----------------------------
+# CORS
 # -----------------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # allow all for development
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+
 # -----------------------------
 # Serve frontend
 # -----------------------------
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
 
 # -----------------------------
 # Root
@@ -33,68 +51,54 @@ app.mount("/static", StaticFiles(directory="frontend"), name="static")
 def root():
     return {"status": "College Chatbot Backend Running"}
 
-# -----------------------------
-# Login
-# -----------------------------
-@app.post("/login")
-def login(data: dict):
-
-    email = data.get("email")
-    password = data.get("password")
-
-    if not email or not password:
-        raise HTTPException(status_code=400, detail="Email and password required")
-
-    result = authenticate(email, password)
-
-    if not result:
-        raise HTTPException(status_code=401, detail="Invalid login")
-
-    return result
-
 
 # -----------------------------
-# Upload Document
+# Upload Document (Admin only)
 # -----------------------------
 @app.post("/admin/upload")
 async def admin_upload(
     title: str = Form(...),
-    file: UploadFile = Form(...)
+    file: UploadFile = Form(...),
+    user=Depends(verify_token)
 ):
-    try:
-        return upload_document(title, file)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
+    if user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
+
+    return upload_document(title, file)
 
 
 # -----------------------------
 # List Documents
 # -----------------------------
 @app.get("/admin/docs")
-def get_docs():
-    try:
-        return list_documents()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+def get_docs(user=Depends(verify_token)):
+
+    if user["role"] not in ["admin", "leader"]:
+        raise HTTPException(status_code=403)
+
+    return list_documents()
 
 
 # -----------------------------
 # Delete Document
 # -----------------------------
 @app.delete("/admin/delete/{doc_id}")
-def remove_doc(doc_id: int):
-    try:
-        delete_document(doc_id)
-        return {"message": "Deleted successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+def remove_doc(doc_id: int, user=Depends(verify_token)):
+
+    if user["role"] != "admin":
+        raise HTTPException(status_code=403)
+
+    delete_document(doc_id)
+
+    return {"message": "Deleted successfully"}
 
 
 # -----------------------------
 # Chat
 # -----------------------------
 @app.post("/chat")
-def chat(data: dict):
+def chat(data: dict, user=Depends(verify_token)):
 
     question = data.get("question")
     mode = data.get("mode", "doc")
@@ -102,11 +106,9 @@ def chat(data: dict):
     if not question:
         raise HTTPException(status_code=400, detail="Question required")
 
-    # DOCUMENT MODE
     if mode == "doc":
         answer = search_docs(question)
 
-    # AI MODE
     elif mode == "ai":
         from backend.ai_mode import ai_answer
         answer = ai_answer(question)
@@ -114,7 +116,12 @@ def chat(data: dict):
     else:
         answer = "Invalid mode"
 
-    return {"answer": answer}
+    return {
+        "answer": answer,
+        "user": user["email"]
+    }
+
+
 # -----------------------------
 # Run server
 # -----------------------------

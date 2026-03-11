@@ -1,21 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>College Chatbot</title>
-    <link rel="stylesheet" href="/static/style.css">
+<meta charset="UTF-8">
+<title>College AI Chatbot</title>
+
+<link rel="stylesheet" href="/static/style.css">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
 </head>
 
 <body>
 
-<div class="login-box">
+<div class="login-container">
 
-<h2>College Chatbot</h2>
+<div class="login-card">
 
-<input id="email" placeholder="Email">
+<h1 class="title">AI College Assistant</h1>
+
+<p class="subtitle">Login with your AIDS department email</p>
+
+<input id="email" type="email" placeholder="aids@dgct.ac.in email">
+
 <input id="password" type="password" placeholder="Password">
 
-<button onclick="login()">Login</button>
+<button id="loginBtn" onclick="login()">Login</button>
+
+<p id="error" class="error"></p>
+
+</div>
 
 </div>
 

@@ -1,10 +1,11 @@
 fastapi
 uvicorn
 mysql-connector-python
+python-multipart
 bcrypt
+PyJWT
+pdfplumber
 sentence-transformers
 faiss-cpu
-python-multipart
-pyjwt
-PyPDF2
-gunicorn
+numpy
+python-dotenv

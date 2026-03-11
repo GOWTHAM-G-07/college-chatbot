@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
 <title>Admin Dashboard</title>
+
+<link rel="stylesheet" href="/static/style.css">
 
 <style>
 
@@ -11,30 +14,24 @@ font-family:Arial;
 background:#0f172a;
 color:white;
 margin:0;
-padding:0;
 }
 
 .container{
-width:900px;
+width:1100px;
 margin:auto;
 margin-top:40px;
 }
 
 h1{
 text-align:center;
-}
-
-.upload-box{
-background:#1e293b;
-padding:20px;
-border-radius:10px;
 margin-bottom:30px;
 }
 
-.docs-box{
+.section{
 background:#1e293b;
 padding:20px;
 border-radius:10px;
+margin-bottom:25px;
 }
 
 input,button{
@@ -54,7 +51,7 @@ button.delete{
 background:#ef4444;
 }
 
-.doc-item{
+.item{
 display:flex;
 justify-content:space-between;
 background:#334155;
@@ -73,7 +70,9 @@ border-radius:6px;
 
 <h1>Admin Dashboard</h1>
 
-<div class="upload-box">
+<!-- Upload Documents -->
+
+<div class="section">
 
 <h2>Upload PDF</h2>
 
@@ -85,11 +84,58 @@ border-radius:6px;
 
 </div>
 
-<div class="docs-box">
+<!-- Documents -->
 
-<h2>Uploaded Documents</h2>
+<div class="section">
+
+<h2>Documents</h2>
 
 <div id="docs"></div>
+
+</div>
+
+<!-- Users -->
+
+<div class="section">
+
+<h2>Users</h2>
+
+<button onclick="loadUsers()">Refresh Users</button>
+
+<div id="users"></div>
+
+</div>
+
+<!-- Add User -->
+
+<div class="section">
+
+<h2>Add User</h2>
+
+<input id="newEmail" placeholder="Email">
+
+<input id="newPassword" placeholder="Password">
+
+<select id="role">
+
+<option value="user">User</option>
+<option value="leader">Leader</option>
+
+</select>
+
+<button onclick="addUser()">Add User</button>
+
+</div>
+
+<!-- Chat History -->
+
+<div class="section">
+
+<h2>Chat History</h2>
+
+<button onclick="loadHistory()">Load History</button>
+
+<div id="history"></div>
 
 </div>
 
@@ -97,22 +143,31 @@ border-radius:6px;
 
 <script>
 
+const API="http://127.0.0.1:8000"
+
+const token=localStorage.getItem("token")
+
+// -----------------------------
+// Upload Document
+// -----------------------------
+
 async function upload(){
 
-let title = document.getElementById("title").value
-let file = document.getElementById("file").files[0]
+let title=document.getElementById("title").value
+let file=document.getElementById("file").files[0]
 
-let form = new FormData()
+let form=new FormData()
 
 form.append("title",title)
 form.append("file",file)
 
-let res = await fetch("http://127.0.0.1:8000/admin/upload",{
+let res=await fetch(API+"/admin/upload",{
 method:"POST",
+headers:{
+Authorization:"Bearer "+token
+},
 body:form
 })
-
-let data = await res.json()
 
 alert("Upload successful")
 
@@ -121,13 +176,17 @@ loadDocs()
 }
 
 
+// -----------------------------
+// Load Documents
+// -----------------------------
+
 async function loadDocs(){
 
-let res = await fetch("http://127.0.0.1:8000/admin/docs")
+let res=await fetch(API+"/admin/docs")
 
-let docs = await res.json()
+let docs=await res.json()
 
-let container = document.getElementById("docs")
+let container=document.getElementById("docs")
 
 container.innerHTML=""
 
@@ -135,7 +194,7 @@ docs.forEach(doc=>{
 
 container.innerHTML+=`
 
-<div class="doc-item">
+<div class="item">
 
 <div>
 
@@ -159,21 +218,160 @@ ${doc.filename}
 }
 
 
+// -----------------------------
+// Delete Document
+// -----------------------------
+
 async function deleteDoc(id){
 
-let confirmDelete = confirm("Delete this document?")
+let confirmDelete=confirm("Delete this document?")
 
 if(!confirmDelete) return
 
-await fetch(`http://127.0.0.1:8000/admin/delete/${id}`,{
+await fetch(API+"/admin/delete/"+id,{
 method:"DELETE"
 })
-
-alert("Document deleted")
 
 loadDocs()
 
 }
+
+
+// -----------------------------
+// Load Users
+// -----------------------------
+
+async function loadUsers(){
+
+let res=await fetch(API+"/auth/admin/users",{
+headers:{
+Authorization:"Bearer "+token
+}
+})
+
+let users=await res.json()
+
+let container=document.getElementById("users")
+
+container.innerHTML=""
+
+Object.keys(users).forEach(email=>{
+
+container.innerHTML+=`
+
+<div class="item">
+
+<div>
+
+${email} — ${users[email].role}
+
+</div>
+
+<div>
+
+<button class="delete" onclick="removeUser('${email}')">Remove</button>
+
+</div>
+
+</div>
+
+`
+
+})
+
+}
+
+
+// -----------------------------
+// Add User
+// -----------------------------
+
+async function addUser(){
+
+let email=document.getElementById("newEmail").value
+let password=document.getElementById("newPassword").value
+let role=document.getElementById("role").value
+
+await fetch(API+"/auth/admin/add-user",{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+Authorization:"Bearer "+token
+},
+body:JSON.stringify({
+email:email,
+password:password,
+role:role
+})
+})
+
+alert("User added")
+
+loadUsers()
+
+}
+
+
+// -----------------------------
+// Remove User
+// -----------------------------
+
+async function removeUser(email){
+
+await fetch(API+"/auth/admin/remove-user/"+email,{
+method:"DELETE",
+headers:{
+Authorization:"Bearer "+token
+}
+})
+
+alert("User removed")
+
+loadUsers()
+
+}
+
+
+// -----------------------------
+// Load Chat History
+// -----------------------------
+
+async function loadHistory(){
+
+let res=await fetch(API+"/auth/admin/chat-history",{
+headers:{
+Authorization:"Bearer "+token
+}
+})
+
+let history=await res.json()
+
+let container=document.getElementById("history")
+
+container.innerHTML=""
+
+history.forEach(log=>{
+
+container.innerHTML+=`
+
+<div class="item">
+
+<div>
+
+<b>${log.email}</b><br>
+${log.query}<br>
+<small>${log.time}</small>
+
+</div>
+
+</div>
+
+`
+
+})
+
+}
+
 
 loadDocs()
 
