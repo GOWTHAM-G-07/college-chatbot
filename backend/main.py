@@ -6,10 +6,10 @@ from fastapi.staticfiles import StaticFiles
 from backend.documents import upload_document
 from backend.search import search_docs
 from backend.admin import list_documents, delete_document
-from backend.auth import authenticate
-
+from fastapi import FastAPI
+from backend.auth import router as auth_router
 app = FastAPI()
-
+app.include_router(auth_router, prefix="/auth")
 # -----------------------------
 # CORS FIX (Important)
 # -----------------------------
