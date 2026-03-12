@@ -9,7 +9,7 @@ from backend.admin import list_documents, delete_document
 from backend.auth import router as auth_router
 from backend.auth import verify_token
 from backend.vector_store import rebuild_index
-
+from backend.documents import router as documents_router
 app = FastAPI()
 
 # -----------------------------
@@ -24,7 +24,7 @@ def startup_event():
 # Auth Router
 # -----------------------------
 app.include_router(auth_router, prefix="/auth")
-
+app.include_router(documents_router, prefix="/documents")
 
 # -----------------------------
 # CORS

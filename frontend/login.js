@@ -1,43 +1,69 @@
-async function login() {
+async function login(){
 
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
+const email = document.getElementById("email").value
+const password = document.getElementById("password").value
 
-    try {
+try{
 
-        const res = await fetch("http://127.0.0.1:8000/auth/login", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                email: email,
-                password: password
-            })
-        });
+const res = await fetch("/auth/login",{
 
-        const data = await res.json();
+method:"POST",
 
-        if (!res.ok) {
-            alert(data.detail || "Login failed");
-            return;
-        }
+headers:{
+"Content-Type":"application/json"
+},
 
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("role", data.role);
+body:JSON.stringify({
+email:email,
+password:password
+})
 
-        alert("Login successful");
+})
 
-        if (data.role === "admin") {
-            window.location.href = "/static/admin.html";
-        } else {
-            window.location.href = "/static/chat.html";
-        }
+const data = await res.json()
 
-    } catch (error) {
+if(!res.ok){
+alert(data.detail)
+return
+}
 
-        console.error(error);
-        alert("Cannot connect to backend server");
+localStorage.setItem("token",data.token)
+localStorage.setItem("role",data.role)
 
-    }
+alert("Login successful")
+
+/* ------------------------------
+ROLE BASED REDIRECT
+--------------------------------*/
+
+if(data.role === "leader"){
+
+window.location.href="/static/leader.html"
+
+}
+
+else if(data.role === "subleader"){
+
+window.location.href="/static/manager.html"
+
+}
+
+else if(data.role === "admin"){
+
+window.location.href="/static/admin.html"
+
+}
+
+else{
+
+window.location.href="/static/chat.html"
+
+}
+
+}catch(error){
+
+alert("Cannot connect to backend")
+
+}
+
 }

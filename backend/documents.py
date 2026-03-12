@@ -1,24 +1,27 @@
 import os
 import pdfplumber
+from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi.responses import FileResponse
 from backend.db import get_connection
-from backend.utils.text_chunker import clean_text, chunk_text
-from backend.services.embedding_service import create_embeddings
-from backend.vector_store import add_vectors
 
+router = APIRouter()
 
 UPLOAD_FOLDER = "uploads"
+
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
-def upload_document(title, file):
+# -----------------------------
+# Upload Document
+# -----------------------------
+@router.post("/upload")
+async def upload_document(title: str, file: UploadFile = File(...)):
 
-    # Save uploaded file
     file_location = os.path.join(UPLOAD_FOLDER, file.filename)
 
     with open(file_location, "wb") as f:
-        f.write(file.file.read())
+        f.write(await file.read())
 
-    # Extract text from PDF
     text = ""
 
     with pdfplumber.open(file_location) as pdf:
@@ -27,56 +30,94 @@ def upload_document(title, file):
             if page_text:
                 text += page_text + "\n"
 
-    # Clean text
-    text = clean_text(text)
-
-    # Split into chunks
-    chunks = chunk_text(text, chunk_size=400)
-
-    # Generate embeddings
-    embeddings = create_embeddings(chunks)
-
-    # Store in database
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Insert document
-    doc_query = """
+    query = """
     INSERT INTO documents
-    (filename, title, subject, file_path, uploaded_by, content)
-    VALUES (%s,%s,%s,%s,%s,%s)
+    (title,file_path,content)
+    VALUES (%s,%s,%s)
     """
 
-    cursor.execute(doc_query, (
-        file.filename,
-        title,
-        "general",
-        file_location,
-        1,
-        text
-    ))
-
-    document_id = cursor.lastrowid
-
-    # Store chunks
-    chunk_query = """
-    INSERT INTO document_chunks
-    (document_id, chunk_text)
-    VALUES (%s,%s)
-    """
-
-    for chunk in chunks:
-        cursor.execute(chunk_query, (document_id, chunk))
+    cursor.execute(query, (title, file_location, text))
 
     conn.commit()
 
     cursor.close()
     conn.close()
 
-    # Add vectors to FAISS index
-    add_vectors(embeddings, chunks)
+    return {"message": "Document uploaded successfully"}
 
-    return {
-        "message": "Document uploaded successfully",
-        "chunks_created": len(chunks)
-    }
+
+# -----------------------------
+# List Documents
+# -----------------------------
+@router.get("/list")
+def list_documents():
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("SELECT id,title,file_path FROM documents")
+
+    docs = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return docs
+
+
+# -----------------------------
+# Delete Document
+# -----------------------------
+@router.delete("/delete/{doc_id}")
+def delete_document(doc_id: int):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT file_path FROM documents WHERE id=%s", (doc_id,))
+    doc = cursor.fetchone()
+
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    file_path = doc[0]
+
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    cursor.execute("DELETE FROM documents WHERE id=%s", (doc_id,))
+
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+
+    return {"message": "Document deleted successfully"}
+
+
+# -----------------------------
+# Download Document
+# -----------------------------
+@router.get("/download/{doc_id}")
+def download_document(doc_id: int):
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute(
+        "SELECT file_path FROM documents WHERE id=%s",
+        (doc_id,)
+    )
+
+    doc = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    return FileResponse(doc["file_path"], filename=os.path.basename(doc["file_path"]))

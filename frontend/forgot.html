@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+
+<body style="background:#0f172a;color:white">
+
+<h2>Reset Password</h2>
+
+<input id="email" placeholder="Email"><br><br>
+
+<input id="password" placeholder="New Password"><br><br>
+
+<button onclick="resetPassword()">Reset Password</button>
+
+<script>
+
+async function resetPassword(){
+
+const email=document.getElementById("email").value
+const password=document.getElementById("password").value
+
+await fetch("http://127.0.0.1:8000/auth/forgot-password",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+email:email,
+new_password:password
+})
+})
+
+alert("Password changed")
+
+}
+
+</script>
+
+</body>
+</html>
