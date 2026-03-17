@@ -3,13 +3,15 @@ from fastapi import FastAPI, UploadFile, Form, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from backend.documents import upload_document
-from backend.search import search_docs
-from backend.admin import list_documents, delete_document
 from backend.auth import router as auth_router
 from backend.auth import verify_token
-from backend.vector_store import rebuild_index
+
+from backend.chat import router as chat_router
 from backend.documents import router as documents_router
+from backend.dashboard import router as dashboard_router
+
+from backend.vector_store import rebuild_index
+
 app = FastAPI()
 
 # -----------------------------
@@ -21,12 +23,20 @@ def startup_event():
 
 
 # -----------------------------
-# Auth Router
+# Routers
 # -----------------------------
+
 app.include_router(auth_router, prefix="/auth")
-app.include_router(documents_router, prefix="/documents")
+app.include_router(chat_router)
+app.include_router(documents_router)
+app.include_router(dashboard_router)
+
 
 # -----------------------------
+# Static Files (Frontend)
+# -----------------------------
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
+#------------------------------
 # CORS
 # -----------------------------
 app.add_middleware(

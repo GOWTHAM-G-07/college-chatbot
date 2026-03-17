@@ -76,20 +76,25 @@ async function upload(){
 let title = document.getElementById("title").value
 let file = document.getElementById("file").files[0]
 
-let form = new FormData()
+let formData = new FormData()
 
-form.append("title",title)
-form.append("file",file)
+formData.append("title",title)
+formData.append("file",file)
 
-await fetch(API + "/admin/upload",{
+let res = await fetch("/admin/upload",{
 method:"POST",
 headers:{
-Authorization:"Bearer " + localStorage.getItem("token")
+Authorization:"Bearer "+localStorage.getItem("token")
 },
-body:form
+body:formData
 })
 
+let data = await res.json()
+
 alert("Upload successful")
+
+/* refresh document list */
+loadDocs()
 
 }
 

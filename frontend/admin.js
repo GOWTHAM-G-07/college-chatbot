@@ -1,28 +1,42 @@
-function upload() {
-  const title = document.getElementById("title").value;
-  const file = document.getElementById("file").files[0];
+function upload(){
 
-  if (!title || !file) {
-    showToast("Please fill all fields", false);
-    return;
-  }
+const title = document.getElementById("title").value
+const file = document.getElementById("file").files[0]
 
-  const form = new FormData();
-  form.append("title", title);
-  form.append("file", file);
-
-  fetch("http://127.0.0.1:8000/admin/upload", {
-    method: "POST",
-    body: form
-  })
-  .then(res => res.json())
-  .then(data => {
-    showToast(data.message, true);
-  })
-  .catch(() => {
-    showToast("Upload failed", false);
-  });
+if(!title || !file){
+showToast("Please fill all fields", false)
+return
 }
+
+const form = new FormData()
+form.append("title", title)
+form.append("file", file)
+
+fetch("http://127.0.0.1:8000/admin/upload", {
+method: "POST",
+headers:{
+Authorization:"Bearer " + localStorage.getItem("token")
+},
+body: form
+})
+.then(res => res.json())
+.then(data => {
+
+showToast(data.message || "Upload success", true)
+
+/* refresh document list */
+loadDocs()
+
+})
+.catch(err => {
+
+console.error(err)
+showToast("Upload failed", false)
+
+})
+
+}
+
 
 function showToast(msg, success) {
   const toast = document.getElementById("toast");

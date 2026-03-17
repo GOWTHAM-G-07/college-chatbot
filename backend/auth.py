@@ -307,6 +307,13 @@ def add_user(new_user: User, user=Depends(verify_token)):
 
     require_role(user, ["admin"])
 
+    # Admin cannot create leader
+    if new_user.role in ["leader", "subleader"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Admin cannot create leader or subleader"
+        )
+
     validate_email(new_user.email)
 
     hashed = bcrypt.hashpw(
@@ -322,8 +329,6 @@ def add_user(new_user: User, user=Depends(verify_token)):
     }
 
     return {"message": "User added successfully"}
-
-
 # -----------------------------
 # Add User (Leader Only)
 # -----------------------------
@@ -381,6 +386,13 @@ def remove_user(email: str, user=Depends(verify_token)):
 
     if email not in users_db:
         raise HTTPException(status_code=404)
+
+    # Admin cannot remove leader/subleader
+    if users_db[email]["role"] in ["leader","subleader"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Admin cannot remove leader or subleader"
+        )
 
     del users_db[email]
 

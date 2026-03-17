@@ -7,7 +7,6 @@ from backend.db import get_connection
 router = APIRouter()
 
 UPLOAD_FOLDER = "uploads"
-
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
@@ -33,16 +32,15 @@ async def upload_document(title: str, file: UploadFile = File(...)):
     conn = get_connection()
     cursor = conn.cursor()
 
-    query = """
-    INSERT INTO documents
-    (title,file_path,content)
-    VALUES (%s,%s,%s)
-    """
-
-    cursor.execute(query, (title, file_location, text))
+    cursor.execute(
+        """
+        INSERT INTO documents (title,file_path,content)
+        VALUES (%s,%s,%s)
+        """,
+        (title, file_location, text),
+    )
 
     conn.commit()
-
     cursor.close()
     conn.close()
 
@@ -52,13 +50,23 @@ async def upload_document(title: str, file: UploadFile = File(...)):
 # -----------------------------
 # List Documents
 # -----------------------------
-@router.get("/list")
+@router.get("/admin/docs")
 def list_documents():
 
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute("SELECT id,title,file_path FROM documents")
+    cursor.execute(
+        """
+        SELECT
+        id,
+        title,
+        file_path,
+        SUBSTRING_INDEX(file_path,'/',-1) AS filename
+        FROM documents
+        ORDER BY id DESC
+        """
+    )
 
     docs = cursor.fetchall()
 
@@ -77,7 +85,11 @@ def delete_document(doc_id: int):
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT file_path FROM documents WHERE id=%s", (doc_id,))
+    cursor.execute(
+        "SELECT file_path FROM documents WHERE id=%s",
+        (doc_id,),
+    )
+
     doc = cursor.fetchone()
 
     if not doc:
@@ -88,10 +100,12 @@ def delete_document(doc_id: int):
     if os.path.exists(file_path):
         os.remove(file_path)
 
-    cursor.execute("DELETE FROM documents WHERE id=%s", (doc_id,))
+    cursor.execute(
+        "DELETE FROM documents WHERE id=%s",
+        (doc_id,),
+    )
 
     conn.commit()
-
     cursor.close()
     conn.close()
 
@@ -109,7 +123,7 @@ def download_document(doc_id: int):
 
     cursor.execute(
         "SELECT file_path FROM documents WHERE id=%s",
-        (doc_id,)
+        (doc_id,),
     )
 
     doc = cursor.fetchone()
@@ -118,6 +132,31 @@ def download_document(doc_id: int):
     conn.close()
 
     if not doc:
-        raise HTTPException(status_code=404, detail="Document not found")
+        raise HTTPException(status_code=404)
 
-    return FileResponse(doc["file_path"], filename=os.path.basename(doc["file_path"]))
+    return FileResponse(doc["file_path"])
+
+
+# -----------------------------
+# Preview Document
+# -----------------------------
+@router.get("/preview/{doc_id}")
+def preview_document(doc_id: int):
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute(
+        "SELECT file_path FROM documents WHERE id=%s",
+        (doc_id,),
+    )
+
+    doc = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    if not doc:
+        raise HTTPException(status_code=404)
+
+    return FileResponse(doc["file_path"])
