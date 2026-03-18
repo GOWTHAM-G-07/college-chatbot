@@ -307,28 +307,23 @@ def add_user(new_user: User, user=Depends(verify_token)):
 
     require_role(user, ["admin"])
 
-    # Admin cannot create leader
-    if new_user.role in ["leader", "subleader"]:
+    # ❌ Admin cannot create leader/subleader
+    if new_user.role != "user":
         raise HTTPException(
             status_code=403,
-            detail="Admin cannot create leader or subleader"
+            detail="Admin can only create normal users"
         )
 
-    validate_email(new_user.email)
-
-    hashed = bcrypt.hashpw(
-        new_user.password.encode(),
-        bcrypt.gensalt()
-    )
+    hashed = bcrypt.hashpw(new_user.password.encode(), bcrypt.gensalt())
 
     users_db[new_user.email] = {
         "password": hashed,
-        "role": new_user.role,
+        "role": "user",
         "created_at": datetime.utcnow(),
         "last_login": None
     }
 
-    return {"message": "User added successfully"}
+    return {"message": "User added by admin"}
 # -----------------------------
 # Add User (Leader Only)
 # -----------------------------
