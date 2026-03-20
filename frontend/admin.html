@@ -1,3 +1,16 @@
+<div class="topbar">
+
+<div class="search">
+<input placeholder="Search...">
+</div>
+
+<div class="top-right">
+<span>🔔</span>
+<span>⚙️</span>
+<span class="profile">Admin</span>
+</div>
+
+</div>
 <!DOCTYPE html>
 <html>
 
@@ -70,14 +83,36 @@ border-radius:6px;
 <h1>ASTROZ CHAT BOT</h1>
 
 <div class="container">
+<div class="main">
+
+<h2>Admin Dashboard</h2>
+
+<div class="stats">
+
+<div class="card">
+<h3>📄 Documents</h3>
+<p id="docCount">0</p>
+</div>
+
+<div class="card">
+<h3>👥 Users</h3>
+<p id="userCount">0</p>
+</div>
+
+<div class="card">
+<h3>📢 Announcements</h3>
+<p id="announceCount">0</p>
+</div>
+
+</div>
 
 <h1>Admin Dashboard</h1>
 
 <!-- Upload Documents -->
 
-<div class="section">
+<div class="upload-box">
 
-<h2>Upload PDF</h2>
+<h3>Upload PDF</h3>
 
 <input id="title" placeholder="Document Title">
 
@@ -93,7 +128,17 @@ border-radius:6px;
 
 <h2>Documents</h2>
 
+<div class="table">
+
+<div class="row header">
+<span>Name</span>
+<span>Date</span>
+<span>Action</span>
+</div>
+
 <div id="docs"></div>
+
+</div>
 
 </div>
 
@@ -170,14 +215,17 @@ container.innerHTML=""
 let role = localStorage.getItem("role")
 
 docs.forEach(doc=>{
-container.innerHTML += `
-<div class="item">
-<div>
-<b>${doc.title}</b><br>
-${doc.filename}
-</div>
 
-<div>
+container.innerHTML += `
+
+<div class="row">
+
+<span>${doc.title}</span>
+
+<span>Today</span>
+
+<span>
+
 <a href="/documents/preview/${doc.id}" target="_blank">
 <button>Preview</button>
 </a>
@@ -192,10 +240,14 @@ Delete
 </button>
 ` : ""}
 
+</span>
+
 </div>
-</div>
+
 `
+
 })
+
 }
 
 // expose globally (IMPORTANT)

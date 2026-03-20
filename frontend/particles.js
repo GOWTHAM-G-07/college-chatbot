@@ -62,10 +62,15 @@ ctx.stroke()
 
 // draw nodes
 nodes.forEach(n=>{
+const glow = Math.sin(Date.now()*0.005)*2 + 3
+
 ctx.beginPath()
-ctx.arc(n.x,n.y,2,0,Math.PI*2)
-ctx.fillStyle = "#3b82f6"
+ctx.arc(n.x,n.y,glow,0,Math.PI*2)
+ctx.fillStyle = "#60a5fa"
+ctx.shadowColor = "#3b82f6"
+ctx.shadowBlur = 15
 ctx.fill()
+ctx.shadowBlur = 0
 })
 
 requestAnimationFrame(draw)

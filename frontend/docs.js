@@ -1,6 +1,6 @@
 const API="http://127.0.0.1:8000"
 
-async function loadDocs(){
+async function ocs(){
 
 let res = await fetch(API+"/admin/docs")
 
@@ -42,7 +42,7 @@ ${doc.filename}
 })
 
 }
-async function loadDocs(){
+async function ocs(){
 
 let res = await fetch(API+"/admin/docs",{
 headers:{
