@@ -44,3 +44,9 @@ function logout(){
 localStorage.clear()
 location.href="/static/login.html"
 }
+document.querySelectorAll(".sidebar button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".sidebar button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  });
+});
