@@ -11,7 +11,7 @@ from backend.documents import router as documents_router
 from backend.dashboard import router as dashboard_router
 
 from backend.vector_store import rebuild_index
-
+from dotenv import load_dotenv
 app = FastAPI()
 
 # -----------------------------
@@ -130,8 +130,9 @@ def chat(data: dict, user=Depends(verify_token)):
         "answer": answer,
         "user": user["email"]
     }
-
-
+#---------------------------------------------------
+#--------------------------------------------------
+load_dotenv()
 # -----------------------------
 # Run server
 # -----------------------------
