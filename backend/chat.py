@@ -2,19 +2,21 @@ import os
 from fastapi import APIRouter, Depends, HTTPException
 from backend.auth import verify_token
 from backend.db import get_connection
-from groq import Groq
 
 router = APIRouter()
 
-# ✅ Secure API Key
+# =========================
+# SAFE GROQ SETUP
+# =========================
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-if not GROQ_API_KEY:
-    raise ValueError("GROQ_API_KEY not found")
+client = None
 
-client = Groq(api_key=GROQ_API_KEY)
-
-
+if GROQ_API_KEY:
+    from groq import Groq
+    client = Groq(api_key=GROQ_API_KEY)
+else:
+    print("⚠️ GROQ API key not found → AI disabled")
 # -----------------------------
 # CHAT API
 # -----------------------------
