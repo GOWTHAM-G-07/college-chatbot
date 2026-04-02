@@ -1,11 +1,11 @@
 from backend.db import get_connection
 from fastapi import APIRouter, HTTPException, Depends, Header
+from fastapi import Request
 from pydantic import BaseModel
 import bcrypt
 import jwt
 import re
 from datetime import datetime, timedelta
-
 router = APIRouter()
 
 SECRET_KEY = "college_chatbot_secret"
@@ -38,6 +38,7 @@ users_db = {
 }
 
 }
+
 chat_logs = []
 user_activity = []
 
@@ -92,29 +93,25 @@ def validate_email(email: str):
 
 
 # -----------------------------
-# Token Verification
-# -----------------------------
-def verify_token(authorization: str = Header(...)):
+# Token Verification (🔥 FIXED SAFE VERSION)
+# -------------------------
+
+from fastapi import Request
+
+def verify_token(request: Request):
+
+    auth_header = request.headers.get("Authorization")
+
+    if not auth_header:
+        raise HTTPException(status_code=401, detail="Missing token")
+
+    token = auth_header.replace("Bearer ", "")
 
     try:
-
-        token = authorization.replace("Bearer ", "")
-
-        payload = jwt.decode(
-            token,
-            SECRET_KEY,
-            algorithms=[ALGORITHM]
-        )
-
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
-
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-
-    except jwt.InvalidTokenError:
+    except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
-
-
 # -----------------------------
 # Role Permission Helper
 # -----------------------------
@@ -159,7 +156,7 @@ def register(user: User):
 
 
 # -----------------------------
-# Login
+# Login (🔥 ONLY FIX HERE)
 # -----------------------------
 @router.post("/login")
 def login(user: User):
@@ -202,10 +199,12 @@ def login(user: User):
 
     return {
         "message": "Login successful",
-        "token": token,
+        "access_token": token,   # 🔥 FIXED (IMPORTANT)
+        "token": token,          # 🔥 KEEP OLD FOR COMPATIBILITY
         "role": role
     }
-   
+
+
 # -----------------------------
 # Chat Endpoint
 # -----------------------------
@@ -244,26 +243,13 @@ def leader_dashboard(user=Depends(verify_token)):
     total_users = len(users_db)
     total_queries = len(chat_logs)
 
-    active_users = 0
-
-    for u in users_db.values():
-        if u["last_login"]:
-            active_users += 1
-
-    inactive_users = total_users - active_users
-
-    user_search_count = {}
-
-    for log in chat_logs:
-        email = log["email"]
-        user_search_count[email] = user_search_count.get(email, 0) + 1
+    active_users = sum(1 for u in users_db.values() if u["last_login"])
 
     return {
         "total_users": total_users,
         "active_users": active_users,
-        "inactive_users": inactive_users,
-        "total_queries": total_queries,
-        "search_activity": user_search_count
+        "inactive_users": total_users - active_users,
+        "total_queries": total_queries
     }
 
 
@@ -286,17 +272,14 @@ def list_users(user=Depends(verify_token)):
 
     require_role(user, ["admin"])
 
-    users_list = []
-
-    for email, data in users_db.items():
-
-        users_list.append({
+    return [
+        {
             "email": email,
             "role": data["role"],
             "last_login": data["last_login"]
-        })
-
-    return users_list
+        }
+        for email, data in users_db.items()
+    ]
 
 
 # -----------------------------
@@ -307,7 +290,6 @@ def add_user(new_user: User, user=Depends(verify_token)):
 
     require_role(user, ["admin"])
 
-    # ❌ Admin cannot create leader/subleader
     if new_user.role != "user":
         raise HTTPException(
             status_code=403,
@@ -324,8 +306,10 @@ def add_user(new_user: User, user=Depends(verify_token)):
     }
 
     return {"message": "User added by admin"}
+
+
 # -----------------------------
-# Add User (Leader Only)
+# Leader Add User
 # -----------------------------
 @router.post("/leader/add-user")
 def leader_add_user(new_user: User, user=Depends(verify_token)):
@@ -335,15 +319,9 @@ def leader_add_user(new_user: User, user=Depends(verify_token)):
     validate_email(new_user.email)
 
     if new_user.email in users_db:
-        raise HTTPException(
-            status_code=400,
-            detail="User already exists"
-        )
+        raise HTTPException(status_code=400, detail="User already exists")
 
-    hashed = bcrypt.hashpw(
-        new_user.password.encode(),
-        bcrypt.gensalt()
-    )
+    hashed = bcrypt.hashpw(new_user.password.encode(), bcrypt.gensalt())
 
     users_db[new_user.email] = {
         "password": hashed,
@@ -382,8 +360,7 @@ def remove_user(email: str, user=Depends(verify_token)):
     if email not in users_db:
         raise HTTPException(status_code=404)
 
-    # Admin cannot remove leader/subleader
-    if users_db[email]["role"] in ["leader","subleader"]:
+    if users_db[email]["role"] in ["leader", "subleader"]:
         raise HTTPException(
             status_code=403,
             detail="Admin cannot remove leader or subleader"

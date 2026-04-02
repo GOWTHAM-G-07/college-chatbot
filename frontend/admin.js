@@ -19,7 +19,7 @@ function showToast(msg) {
 /* =========================
    LOAD DOCUMENTS
 ========================= */
-aasync function loadDocs() {
+async function loadDocs() {
 
   const token = localStorage.getItem("token");
 
@@ -33,6 +33,12 @@ aasync function loadDocs() {
     });
 
     let docs = await res.json();
+
+    if (!Array.isArray(docs)) {
+      console.error("Invalid response:", docs);
+      showToast("Failed to load docs");
+      return;
+    }
 
     let container = document.getElementById("docs");
     container.innerHTML = "";
@@ -53,32 +59,36 @@ aasync function loadDocs() {
     showToast("Failed to load docs");
   }
 }
+
 /* =========================
-   UPLOAD
+   UPLOAD (FINAL WORKING)
 ========================= */
-async function upload() {
+async function uploadAdmin() {
 
   const token = localStorage.getItem("token");
 
   if (!token) {
-    showToast("Login required");
+    alert("❌ Login required");
     return;
   }
 
-  let file = document.getElementById("file").files[0];
-  let title = document.getElementById("title").value;
+  const fileInput = document.getElementById("file");
+  const titleInput = document.getElementById("title");
+
+  const file = fileInput.files[0];
+  const title = titleInput.value;
 
   if (!file || !title) {
-    showToast("Fill all fields");
+    alert("❌ Select file and enter title");
     return;
   }
 
-  let formData = new FormData();
+  const formData = new FormData();
   formData.append("file", file);
   formData.append("title", title);
 
   try {
-    let res = await fetch(API + "/admin/upload", {
+    const response = await fetch(API + "/admin/upload", {
       method: "POST",
       headers: {
         Authorization: "Bearer " + token
@@ -86,18 +96,38 @@ async function upload() {
       body: formData
     });
 
-    let data = await res.json();
+    const text = await response.text();
 
-    showToast(data.msg || "Uploaded");
+    console.log("STATUS:", response.status);
+    console.log("RESPONSE:", text);
+
+    if (response.status === 401) {
+      alert("❌ Unauthorized (login again)");
+      return;
+    }
+
+    if (response.status === 500) {
+      alert("❌ Server error — check backend terminal");
+      return;
+    }
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      alert("❌ Invalid server response");
+      return;
+    }
+
+    alert("✅ " + (data.msg || "Uploaded"));
 
     loadDocs();
 
   } catch (err) {
     console.error(err);
-    showToast("Upload failed");
+    alert("❌ Upload crashed");
   }
 }
-
 /* =========================
    ADD USER
 ========================= */

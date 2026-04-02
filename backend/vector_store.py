@@ -2,49 +2,72 @@ import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from backend.db import get_connection
+import PyPDF2
 
-# Load embedding model
 model = SentenceTransformer("all-MiniLM-L6-v2")
-
-# Vector dimension
 dimension = 384
 
-# FAISS index
 index = faiss.IndexFlatL2(dimension)
 
-# store texts linked to vectors
 documents = []
 
 
+def read_pdf(path):
+    text = ""
+    with open(path, "rb") as f:
+        reader = PyPDF2.PdfReader(f)
+        for page in reader.pages:
+            text += page.extract_text() or ""
+    return text
+
+
 def rebuild_index():
-    """Rebuild FAISS index from database on startup"""
     global documents, index
 
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute("SELECT id, content FROM documents")
+    # 🔥 read from uploaded files
+    cursor.execute("SELECT id, file_path FROM documents")
     rows = cursor.fetchall()
 
     cursor.close()
     conn.close()
 
-    documents = rows
+    documents = []
     index.reset()
 
-    if rows:
-        texts = [r["content"] for r in rows]
+    all_chunks = []
 
-        embeddings = model.encode(texts)
+    for doc in rows:
+        text = read_pdf(doc["file_path"])
 
+        # simple chunking
+        chunks = [text[i:i+500] for i in range(0, len(text), 500)]
+
+        for chunk in chunks:
+            documents.append({"content": chunk})
+            all_chunks.append(chunk)
+
+    if all_chunks:
+        embeddings = model.encode(all_chunks)
         embeddings = np.array(embeddings).astype("float32")
-
         index.add(embeddings)
 
 
+def semantic_search(query, k=3):
+    D, I = index.search(query_embedding, k)
+
+    results = []
+    for i in I[0]:
+        results.append(chunks[i])
+
+    return results
 def add_vectors(vectors, texts):
-    """Add vectors dynamically when new documents are uploaded"""
+    """Add new document vectors dynamically"""
     global documents, index
+
+    import numpy as np
 
     vectors = np.array(vectors).astype("float32")
 
@@ -52,16 +75,3 @@ def add_vectors(vectors, texts):
 
     for text in texts:
         documents.append({"content": text})
-
-
-def semantic_search(query):
-    """Search FAISS index"""
-    if not documents:
-        return None
-
-    q_vec = model.encode([query])
-    q_vec = np.array(q_vec).astype("float32")
-
-    distances, indices = index.search(q_vec, 1)
-
-    return documents[indices[0][0]]["content"]

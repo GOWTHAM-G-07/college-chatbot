@@ -1,42 +1,31 @@
 import os
-from fastapi import FastAPI, UploadFile, Form, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from backend.auth import router as auth_router
-from backend.auth import verify_token
-
+from backend.auth import router as auth_router, verify_token
 from backend.chat import router as chat_router
 from backend.documents import router as documents_router
 from backend.dashboard import router as dashboard_router
-
+from backend.users import router as users_router
 from backend.vector_store import rebuild_index
+from backend.search import search_docs
 from dotenv import load_dotenv
+from backend.llm import generate_answer
+from backend.vector_store import semantic_search
+load_dotenv()
+
 app = FastAPI()
 
 # -----------------------------
-# Load FAISS index on startup
+# Startup: Load FAISS index
 # -----------------------------
-@app.on_event("startup")
-def startup_event():
-    rebuild_index()
+#@app.on_event("startup")
+#def startup_event():
+ #   rebuild_index()
 
 
 # -----------------------------
-# Routers
-# -----------------------------
-
-app.include_router(auth_router, prefix="/auth")
-app.include_router(chat_router)
-app.include_router(documents_router)
-app.include_router(dashboard_router)
-
-
-# -----------------------------
-# Static Files (Frontend)
-# -----------------------------
-app.mount("/static", StaticFiles(directory="frontend"), name="static")
-#------------------------------
 # CORS
 # -----------------------------
 app.add_middleware(
@@ -49,9 +38,21 @@ app.add_middleware(
 
 
 # -----------------------------
-# Serve frontend
+# Routers
+# -----------------------------
+app.include_router(auth_router, prefix="/auth")
+app.include_router(chat_router)
+app.include_router(documents_router)   # 🔥 contains upload/docs/delete
+app.include_router(dashboard_router)
+app.include_router(users_router)
+
+# -----------------------------
+# Static Files
 # -----------------------------
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+# 🔥 SERVE UPLOADED FILES
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 
 # -----------------------------
@@ -63,49 +64,7 @@ def root():
 
 
 # -----------------------------
-# Upload Document (Admin only)
-# -----------------------------
-@app.post("/admin/upload")
-async def admin_upload(
-    title: str = Form(...),
-    file: UploadFile = Form(...),
-    user=Depends(verify_token)
-):
-
-    if user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Admin only")
-
-    return upload_document(title, file)
-
-
-# -----------------------------
-# List Documents
-# -----------------------------
-@app.get("/admin/docs")
-def get_docs(user=Depends(verify_token)):
-
-    if user["role"] not in ["admin", "leader"]:
-        raise HTTPException(status_code=403)
-
-    return list_documents()
-
-
-# -----------------------------
-# Delete Document
-# -----------------------------
-@app.delete("/admin/delete/{doc_id}")
-def remove_doc(doc_id: int, user=Depends(verify_token)):
-
-    if user["role"] != "admin":
-        raise HTTPException(status_code=403)
-
-    delete_document(doc_id)
-
-    return {"message": "Deleted successfully"}
-
-
-# -----------------------------
-# Chat
+# Chat (AI + Document Mode)
 # -----------------------------
 @app.post("/chat")
 def chat(data: dict, user=Depends(verify_token)):
@@ -130,9 +89,8 @@ def chat(data: dict, user=Depends(verify_token)):
         "answer": answer,
         "user": user["email"]
     }
-#---------------------------------------------------
-#--------------------------------------------------
-load_dotenv()
+
+
 # -----------------------------
 # Run server
 # -----------------------------
