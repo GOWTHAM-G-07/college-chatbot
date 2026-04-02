@@ -285,7 +285,7 @@ def list_users(user=Depends(verify_token)):
 # -----------------------------
 # Add User (Admin Only)
 # -----------------------------
-@router.post("/auth/admin/add-user")
+@router.post("/admin/add-user")
 def add_user(new_user: User, user=Depends(verify_token)):
 
     require_role(user, ["admin"])

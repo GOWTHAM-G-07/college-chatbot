@@ -34,20 +34,34 @@ async function loadDocs() {
 
     let docs = await res.json();
 
-    console.log("DOCS:", docs);
-
-    // ✅ UPDATE COUNT HERE
-    document.getElementById("docCount").innerText = docs.length;
-
     let container = document.getElementById("docs");
     container.innerHTML = "";
 
+    // ✅ UPDATE COUNT
+    document.getElementById("docCount").innerText = docs.length;
+
     docs.forEach(doc => {
+
+      let fileName = doc.file_path.split("uploads/").pop();
+
       container.innerHTML += `
         <div class="row">
           <span>${doc.title}</span>
+          <span>Today</span>
           <span>
-            <button onclick="downloadDoc('${doc.file_path}')">Download</button>
+
+            <button onclick="previewDoc('${fileName}')">
+              Preview
+            </button>
+
+            <button onclick="downloadDoc('${fileName}')">
+              Download
+            </button>
+
+            <button onclick="deleteDoc(${doc.id})">
+              Delete
+            </button>
+
           </span>
         </div>
       `;
@@ -55,7 +69,6 @@ async function loadDocs() {
 
   } catch (err) {
     console.error(err);
-    showToast("Failed to load docs");
   }
 }
 /* =========================
@@ -131,19 +144,18 @@ async function uploadAdmin() {
 ========================= */
 window.addUser = async function () {
 
-  console.log("🔥 ADD USER CLICKED");
-
   const token = localStorage.getItem("token");
-  console.log("TOKEN:", token);
 
   let email = document.getElementById("newEmail").value;
   let password = document.getElementById("newPassword").value;
-  let role = document.getElementById("role").value;
+
+  let roleElement = document.getElementById("role");
+  let role = roleElement ? roleElement.value : "user";
 
   console.log("DATA:", email, password, role);
 
   try {
-    let res = await fetch("http://127.0.0.1:8000/admin/add-user", {
+    let res = await fetch(API + "/auth/admin/add-user", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -152,17 +164,26 @@ window.addUser = async function () {
       body: JSON.stringify({ email, password, role })
     });
 
-    console.log("STATUS:", res.status);
-
     let text = await res.text();
     console.log("RAW RESPONSE:", text);
 
-    let data = JSON.parse(text);
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      alert("Server error");
+      return;
+    }
 
-    alert(data.message || data.msg || "User added");
+    if (!res.ok) {
+      alert(data.detail || "Add user failed");
+      return;
+    }
+
+    alert("User added successfully");
 
   } catch (err) {
-    console.error("ERROR:", err);
+    console.error(err);
     alert("Add user failed");
   }
 };
@@ -170,7 +191,15 @@ window.addUser = async function () {
    DOWNLOAD
 ========================= */
 function downloadDoc(path) {
-  window.open(API + "/" + path);
+
+  // remove "uploads/" if already included
+  let fileName = path.split("uploads/").pop();
+
+  let url = API + "/uploads/" + fileName;
+
+  console.log("DOWNLOAD URL:", url);
+
+  window.open(url);
 }
 /*==========================
 user count update
@@ -180,7 +209,7 @@ async function loadUsers() {
   const token = localStorage.getItem("token");
 
   try {
-    let res = await fetch(API + "/admin/users", {
+    let res = await fetch(API + "/auth/admin/users", {
       headers: {
         Authorization: "Bearer " + token
       }
@@ -188,25 +217,57 @@ async function loadUsers() {
 
     let users = await res.json();
 
-    console.log("USERS:", users);
+    console.log("USERS RESPONSE:", users);
 
-    // ✅ update count
+    // 🔥 FIX: ensure it's array
+    if (!Array.isArray(users)) {
+      console.error("Users not array:", users);
+      document.getElementById("userCount").innerText = 0;
+      return;
+    }
+
     document.getElementById("userCount").innerText = users.length;
-
-    // OPTIONAL: show list
-    let container = document.getElementById("users");
-    container.innerHTML = "";
-
-    users.forEach(u => {
-      container.innerHTML += `<div>${u.email} (${u.role})</div>`;
-    });
 
   } catch (err) {
     console.error(err);
-    showToast("Failed to load users");
   }
 }
+/*==========================
+          PREVIEW
+============================*/
+function previewDoc(path) {
+  let fileName = path.split("uploads/").pop();
+  let url = API + "/uploads/" + fileName;
 
+  window.open(url, "_blank");
+}
+/*=============================
+     FRONTEND DELETE LOGIC
+=================================*/
+async function deleteDoc(id) {
+
+  const token = localStorage.getItem("token");
+
+  if (!confirm("Delete this document?")) return;
+
+  try {
+    let res = await fetch(API + "/admin/delete/" + id, {
+      method: "DELETE",
+      headers: {
+        Authorization: "Bearer " + token
+      }
+    });
+
+    let data = await res.json();
+
+    alert(data.msg);
+
+    loadDocs(); // refresh
+
+  } catch (err) {
+    console.error(err);
+  }
+}
 /* =========================
    INIT
 ========================= */

@@ -7,7 +7,6 @@ from backend.auth import router as auth_router, verify_token
 from backend.chat import router as chat_router
 from backend.documents import router as documents_router
 from backend.dashboard import router as dashboard_router
-from backend.users import router as users_router
 from backend.vector_store import rebuild_index
 from backend.search import search_docs
 from dotenv import load_dotenv
@@ -44,7 +43,6 @@ app.include_router(auth_router, prefix="/auth")
 app.include_router(chat_router)
 app.include_router(documents_router)   # 🔥 contains upload/docs/delete
 app.include_router(dashboard_router)
-app.include_router(users_router)
 
 # -----------------------------
 # Static Files
