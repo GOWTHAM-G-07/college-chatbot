@@ -14,19 +14,3 @@ def list_documents():
     conn.close()
 
     return docs
-
-
-def delete_document(doc_id):
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "DELETE FROM documents WHERE id=%s",
-        (doc_id,)
-    )
-
-    conn.commit()
-
-    cursor.close()
-    conn.close()
