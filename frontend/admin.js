@@ -34,11 +34,10 @@ async function loadDocs() {
 
     let docs = await res.json();
 
-    if (!Array.isArray(docs)) {
-      console.error("Invalid response:", docs);
-      showToast("Failed to load docs");
-      return;
-    }
+    console.log("DOCS:", docs);
+
+    // ✅ UPDATE COUNT HERE
+    document.getElementById("docCount").innerText = docs.length;
 
     let container = document.getElementById("docs");
     container.innerHTML = "";
@@ -59,7 +58,6 @@ async function loadDocs() {
     showToast("Failed to load docs");
   }
 }
-
 /* =========================
    UPLOAD (FINAL WORKING)
 ========================= */
@@ -133,31 +131,80 @@ async function uploadAdmin() {
 ========================= */
 window.addUser = async function () {
 
+  console.log("🔥 ADD USER CLICKED");
+
   const token = localStorage.getItem("token");
+  console.log("TOKEN:", token);
 
   let email = document.getElementById("newEmail").value;
   let password = document.getElementById("newPassword").value;
   let role = document.getElementById("role").value;
 
-  let res = await fetch(API + "/admin/add-user", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + token
-    },
-    body: JSON.stringify({ email, password, role })
-  });
+  console.log("DATA:", email, password, role);
 
-  let data = await res.json();
+  try {
+    let res = await fetch("http://127.0.0.1:8000/admin/add-user", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + token
+      },
+      body: JSON.stringify({ email, password, role })
+    });
 
-  showToast(data.msg || "User added");
+    console.log("STATUS:", res.status);
+
+    let text = await res.text();
+    console.log("RAW RESPONSE:", text);
+
+    let data = JSON.parse(text);
+
+    alert(data.message || data.msg || "User added");
+
+  } catch (err) {
+    console.error("ERROR:", err);
+    alert("Add user failed");
+  }
 };
-
 /* =========================
    DOWNLOAD
 ========================= */
 function downloadDoc(path) {
   window.open(API + "/" + path);
+}
+/*==========================
+user count update
+==============================*/
+async function loadUsers() {
+
+  const token = localStorage.getItem("token");
+
+  try {
+    let res = await fetch(API + "/admin/users", {
+      headers: {
+        Authorization: "Bearer " + token
+      }
+    });
+
+    let users = await res.json();
+
+    console.log("USERS:", users);
+
+    // ✅ update count
+    document.getElementById("userCount").innerText = users.length;
+
+    // OPTIONAL: show list
+    let container = document.getElementById("users");
+    container.innerHTML = "";
+
+    users.forEach(u => {
+      container.innerHTML += `<div>${u.email} (${u.role})</div>`;
+    });
+
+  } catch (err) {
+    console.error(err);
+    showToast("Failed to load users");
+  }
 }
 
 /* =========================
@@ -165,4 +212,5 @@ function downloadDoc(path) {
 ========================= */
 window.onload = () => {
   loadDocs();
+  loadUsers();
 };

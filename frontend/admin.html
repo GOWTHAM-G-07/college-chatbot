@@ -157,18 +157,6 @@ container.innerHTML += `
 
 }
 
-window.loadDocs = loadDocs
-
-async function deleteDoc(id){
-if(!confirm("Delete?")) return
-
-await fetch(API+"/admin/delete/"+id,{
-method:"DELETE",
-headers:{Authorization:"Bearer "+token}
-})
-
-loadDocs()
-}
 
 window.deleteDoc = deleteDoc
 

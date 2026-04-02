@@ -28,7 +28,7 @@ async def upload_doc(
     if not file.filename.endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF allowed")
 
-    filepath = os.path.join(UPLOAD_DIR, file.filename)
+    filepath = f"uploads/{file.filename}"
 
     # ✅ SAVE FILE
     with open(filepath, "wb") as buffer:
