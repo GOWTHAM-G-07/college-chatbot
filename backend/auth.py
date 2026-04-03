@@ -262,24 +262,23 @@ def chat_history(user=Depends(verify_token)):
     require_role(user, ["admin", "leader"])
 
     return chat_logs
-
-
 # -----------------------------
-# List Users
+# LIST USERS (FROM DATABASE)
 # -----------------------------
 @router.get("/admin/users")
 def list_users(user=Depends(verify_token)):
 
     require_role(user, ["admin"])
 
-    return [
-        {
-            "email": email,
-            "role": data["role"],
-            "last_login": data["last_login"]
-        }
-        for email, data in users_db.items()
-    ]
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("SELECT email, role, created_at FROM users")
+    users = cursor.fetchall()
+
+    conn.close()
+
+    return users
 
 
 # -----------------------------
@@ -290,22 +289,24 @@ def add_user(new_user: User, user=Depends(verify_token)):
 
     require_role(user, ["admin"])
 
-    if new_user.role != "user":
-        raise HTTPException(
-            status_code=403,
-            detail="Admin can only create normal users"
-        )
+    conn = get_connection()
+    cursor = conn.cursor()
 
     hashed = bcrypt.hashpw(new_user.password.encode(), bcrypt.gensalt())
 
-    users_db[new_user.email] = {
-        "password": hashed,
-        "role": "user",
-        "created_at": datetime.utcnow(),
-        "last_login": None
-    }
+    try:
+        cursor.execute(
+            "INSERT INTO users (email, password_hash, role) VALUES (%s,%s,%s)",
+            (new_user.email, hashed, new_user.role)
+        )
+        conn.commit()
+    except Exception as e:
+        conn.close()
+        raise HTTPException(status_code=400, detail=str(e))
 
-    return {"message": "User added by admin"}
+    conn.close()
+
+    return {"msg": "User added to database"}
 
 
 # -----------------------------
@@ -352,20 +353,19 @@ def assign_subleader(email: str, user=Depends(verify_token)):
 # -----------------------------
 # Remove User
 # -----------------------------
+# -----------------------------
+# Remove User (Admin Only)
+# -----------------------------
 @router.delete("/admin/remove-user/{email}")
 def remove_user(email: str, user=Depends(verify_token)):
 
     require_role(user, ["admin"])
 
-    if email not in users_db:
-        raise HTTPException(status_code=404)
+    conn = get_connection()
+    cursor = conn.cursor()
 
-    if users_db[email]["role"] in ["leader", "subleader"]:
-        raise HTTPException(
-            status_code=403,
-            detail="Admin cannot remove leader or subleader"
-        )
+    cursor.execute("DELETE FROM users WHERE email=%s", (email,))
+    conn.commit()
+    conn.close()
 
-    del users_db[email]
-
-    return {"message": "User removed successfully"}
+    return {"msg": "User deleted successfully"}
