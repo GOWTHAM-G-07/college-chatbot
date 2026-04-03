@@ -206,11 +206,12 @@ def login(user: User):
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
     return {
-        "message": "Login successful",
-        "access_token": token,   # 🔥 FIXED (IMPORTANT)
-        "token": token,          # 🔥 KEEP OLD FOR COMPATIBILITY
-        "role": role
-    }
+         "message": "Login successful",
+    "access_token": token,
+    "token": token,
+    "role": role,
+    "email": user.email   # 🔥 ADD THIS LINE
+}
 
 
 # -----------------------------

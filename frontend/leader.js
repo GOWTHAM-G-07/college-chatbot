@@ -10,43 +10,53 @@ window.onload = () => {
   loadDocs();     // documents
 };
 
-/* =========================
-   LOAD STATS (LEADER)
-========================= */
-async function loadStats(){
-  try{
-    const res = await fetch(API + "/auth/leader/stats", {
-      headers:{
+async function loadStats() {
+  const res = await fetch("/auth/leader/stats", {
+    headers: {
+      Authorization: "Bearer " + localStorage.getItem("token")
+    }
+  });
+
+  if (res.status === 401) return;
+
+  const data = await res.json();
+
+  console.log("Stats:", data);
+
+  // ✅ FIXED (match backend)
+  document.getElementById("stats").innerHTML = `
+    Total Users: ${data.total_users || 0}<br>
+    Admins: ${data.admins || 0}<br>
+    Leaders: ${data.leaders || 0}
+  `;
+
+  // ✅ UPDATE CARDS
+  document.getElementById("userCount").innerText =
+    data.total_users || 0;
+}
+
+async function loadUsers() {
+  try {
+    const res = await fetch(API + "/auth/admin/users", {
+      headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     });
+
+    // 🔐 HANDLE AUTH FAILURE FIRST
+    if (res.status === 401) {
+      alert("Session expired. Please login again.");
+      window.location.href = "/login.html";
+      return;
+    }
 
     const data = await res.json();
 
-    document.getElementById("stats").innerHTML = `
-      Total Users: ${data.total_users} <br>
-      Admins: ${data.admins} <br>
-      Leaders: ${data.leaders}
-    `;
-
-  }catch(err){
-    console.error("Stats error:", err);
-  }
-}
-
-/* =========================
-   LOAD USERS
-========================= */
-async function loadUsers(){
-
-  try{
-    const res = await fetch(API + "/auth/admin/users", {
-      headers:{
-        Authorization: "Bearer " + localStorage.getItem("token")
-      }
-    });
-
-    const users = await res.json();
+    // 🧠 VALIDATE RESPONSE TYPE
+    if (!Array.isArray(data)) {
+      console.error("Invalid users response:", data);
+      return;
+    }
 
     const container = document.getElementById("users");
     container.innerHTML = "";
@@ -61,8 +71,7 @@ async function loadUsers(){
       </div>
     `;
 
-    users.forEach(u => {
-
+    data.forEach(u => {
       container.innerHTML += `
         <div class="user-row">
 
@@ -88,7 +97,7 @@ async function loadUsers(){
       `;
     });
 
-  }catch(err){
+  } catch (err) {
     console.error("Users load error:", err);
   }
 }
@@ -158,16 +167,22 @@ async function demote(email){
 /* =========================
    LOAD DOCUMENTS
 ========================= */
-async function loadDocs(){
-
-  try{
+async function loadDocs() {
+  try {
     const res = await fetch(API + "/admin/docs", {
-      headers:{
-        Authorization:"Bearer " + localStorage.getItem("token")
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token")
       }
     });
 
-    if(!res.ok){
+    // 🔐 HANDLE AUTH / ERROR
+    if (res.status === 401) {
+      alert("Session expired. Please login again.");
+      window.location.href = "/login.html";
+      return;
+    }
+
+    if (!res.ok) {
       console.error("Docs API failed:", res.status);
       return;
     }
@@ -179,18 +194,29 @@ async function loadDocs(){
     const container = document.getElementById("docs");
     container.innerHTML = "";
 
-    if(!docs || docs.length === 0){
+    // ✅ SAFE ARRAY CHECK
+    if (!Array.isArray(docs)) {
+      console.error("Invalid docs response:", docs);
+      document.getElementById("docCount").innerText = 0;
+      return;
+    }
+
+    // ✅ UPDATE DOCUMENT COUNT (🔥 THIS WAS MISSING)
+    document.getElementById("docCount").innerText = docs.length;
+
+    // ✅ EMPTY STATE
+    if (docs.length === 0) {
       container.innerHTML = "<p>No documents found</p>";
       return;
     }
 
+    // ✅ RENDER DOCUMENTS
     docs.forEach(doc => {
-
       container.innerHTML += `
         <div class="doc-row">
 
           <div class="doc-title" title="${doc.title || doc.filename}">
-            ${doc.title || doc.filename}
+            ${doc.title || doc.filename || "Untitled"}
           </div>
 
           <div class="doc-actions">
@@ -203,7 +229,7 @@ async function loadDocs(){
       `;
     });
 
-  }catch(err){
+  } catch (err) {
     console.error("Docs error:", err);
   }
 }

@@ -108,6 +108,12 @@
 
 <script>
 window.onload = () => {
+
+  if (!localStorage.getItem("token")) {
+    window.location.href = "/static/login.html";
+    return;
+  }
+
   loadLayout();
   loadStats();
   loadUsers();

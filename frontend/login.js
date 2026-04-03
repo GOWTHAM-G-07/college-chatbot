@@ -28,14 +28,22 @@ async function login(){
     }
 
     // =========================
-    // STORE SESSION
-    // =========================
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("role", data.role);
-    //localStorage.setItem("email", email);  IMPORTANT
-    localStorage.setItem("email", data.email)   // 🔥 ADD THIS
-    alert("Login successful");
+// STORE SESSION
+// =========================
+localStorage.setItem("token", data.access_token);
+localStorage.setItem("role", data.role);
 
+// ✅ SAFE EMAIL STORAGE
+if (data.email && data.email !== "undefined") {
+  localStorage.setItem("email", data.email);
+} else {
+  console.error("Email missing in response:", data);
+
+  // fallback (optional but useful)
+  localStorage.setItem("email", "No Email");
+}
+
+alert("Login successful");
     // =========================
     // ROLE BASED REDIRECT
     // =========================
