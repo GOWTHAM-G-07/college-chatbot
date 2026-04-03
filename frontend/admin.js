@@ -145,14 +145,27 @@ async function uploadAdmin() {
 window.addUser = async function () {
 
   const token = localStorage.getItem("token");
-
+  let name = document.getElementById("newName").value;
   let email = document.getElementById("newEmail").value;
   let password = document.getElementById("newPassword").value;
 
   let roleElement = document.getElementById("role");
   let role = roleElement ? roleElement.value : "user";
 
-  console.log("DATA:", email, password, role);
+ // 🔥 AUTO GENERATE NAME IF EMPTY
+if (!name) {
+  let prefix = email.split("@")[0];
+
+  // remove numbers
+  prefix = prefix.replace(/[0-9]/g, "");
+
+  // keep only alphabets
+  prefix = prefix.replace(/[^a-zA-Z]/g, "");
+
+  name = prefix || "user";
+}
+
+console.log("DATA:", name, email, password, role);
 
   try {
     let res = await fetch(API + "/auth/admin/add-user", {
@@ -161,7 +174,7 @@ window.addUser = async function () {
         "Content-Type": "application/json",
         Authorization: "Bearer " + token
       },
-      body: JSON.stringify({ email, password, role })
+      body: JSON.stringify({ name, email, password, role })
     });
 
     let text = await res.text();

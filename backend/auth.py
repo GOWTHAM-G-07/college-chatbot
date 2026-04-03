@@ -69,6 +69,7 @@ users_db[subleader_email] = {
 # Models
 # -----------------------------
 class User(BaseModel):
+    name: str = None   # ✅ ADD THIS LINE
     email: str
     password: str
     role: str = "user"
@@ -281,34 +282,56 @@ def list_users(user=Depends(verify_token)):
     return users
 
 
-# -----------------------------
-# Add User (Admin Only)
-# -----------------------------
 @router.post("/admin/add-user")
 def add_user(new_user: User, user=Depends(verify_token)):
 
     require_role(user, ["admin"])
 
+    # -----------------------------
+    # STEP 1: GET NAME
+    # -----------------------------
+    name = new_user.name
+
+    # -----------------------------
+    # STEP 2: AUTO GENERATE NAME
+    # -----------------------------
+    if not name:
+        prefix = new_user.email.split("@")[0]
+
+        import re
+        prefix = re.sub(r'\d+', '', prefix)        # remove numbers
+        prefix = re.sub(r'[^a-zA-Z]', '', prefix)  # keep only letters
+
+        name = prefix if prefix else "user"
+
+    # -----------------------------
+    # STEP 3: HASH PASSWORD
+    # -----------------------------
+    hashed = bcrypt.hashpw(new_user.password.encode(), bcrypt.gensalt())
+
+    # -----------------------------
+    # STEP 4: INSERT INTO DATABASE
+    # -----------------------------
     conn = get_connection()
     cursor = conn.cursor()
 
-    hashed = bcrypt.hashpw(new_user.password.encode(), bcrypt.gensalt())
-
     try:
         cursor.execute(
-            "INSERT INTO users (email, password_hash, role) VALUES (%s,%s,%s)",
-            (new_user.email, hashed, new_user.role)
+            "INSERT INTO users (name, email, password_hash, role) VALUES (%s,%s,%s,%s)",
+            (name, new_user.email, hashed, new_user.role)
         )
         conn.commit()
+
     except Exception as e:
         conn.close()
         raise HTTPException(status_code=400, detail=str(e))
 
     conn.close()
 
-    return {"msg": "User added to database"}
-
-
+    # -----------------------------
+    # STEP 5: RESPONSE
+    # -----------------------------
+    return {"msg": "User added successfully"}
 # -----------------------------
 # Leader Add User
 # -----------------------------
