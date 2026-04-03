@@ -28,13 +28,13 @@ async def upload_doc(
     if not file.filename.endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF allowed")
 
-    filepath = f"uploads/{file.filename}"
+    filepath = f"{UPLOAD_DIR}/{file.filename}"
 
-    # ✅ SAVE FILE
+    # SAVE FILE
     with open(filepath, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # ✅ SAVE TO DATABASE
+    # SAVE TO DATABASE
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -46,7 +46,7 @@ async def upload_doc(
     conn.commit()
     conn.close()
 
-    # ✅ FAST VECTOR ADD (NO REBUILD)
+    # VECTOR EMBEDDING
     try:
         reader = PdfReader(filepath)
 
@@ -72,15 +72,32 @@ async def upload_doc(
 @router.get("/docs")
 def get_docs(user=Depends(verify_token)):
 
+    if user["role"] not in ["admin", "leader"]:
+        raise HTTPException(status_code=403, detail="Access denied")
+
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute("SELECT * FROM documents ORDER BY id DESC")
+    cursor.execute("""
+        SELECT id, title, file_path
+        FROM documents
+        ORDER BY id DESC
+    """)
+
     docs = cursor.fetchall()
+
+    # ADD filename for frontend
+    for d in docs:
+        d["filename"] = os.path.basename(d["file_path"])
 
     conn.close()
 
     return docs
+
+
+# -----------------------------
+# DELETE DOCUMENT
+# -----------------------------
 @router.delete("/delete/{doc_id}")
 def delete_doc(doc_id: int, user=Depends(verify_token)):
 
@@ -90,7 +107,6 @@ def delete_doc(doc_id: int, user=Depends(verify_token)):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # get file path first
     cursor.execute("SELECT file_path FROM documents WHERE id=%s", (doc_id,))
     doc = cursor.fetchone()
 
@@ -100,14 +116,11 @@ def delete_doc(doc_id: int, user=Depends(verify_token)):
 
     filepath = doc["file_path"]
 
-    # delete file from disk
-    try:
-        if os.path.exists(filepath):
-            os.remove(filepath)
-    except Exception as e:
-        print("File delete error:", e)
+    # DELETE FILE
+    if os.path.exists(filepath):
+        os.remove(filepath)
 
-    # delete from DB
+    # DELETE FROM DB
     cursor = conn.cursor()
     cursor.execute("DELETE FROM documents WHERE id=%s", (doc_id,))
     conn.commit()

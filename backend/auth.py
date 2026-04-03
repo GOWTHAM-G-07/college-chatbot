@@ -73,7 +73,11 @@ class User(BaseModel):
     email: str
     password: str
     role: str = "user"
-
+class UserCreate(BaseModel):
+    name: str | None = None
+    email: str
+    password: str
+    role: str = "user"
 
 class ChatQuery(BaseModel):
     query: str
@@ -110,8 +114,18 @@ def verify_token(token: str = Depends(oauth2_scheme)):
 # Role Permission Helper
 # -----------------------------
 def require_role(user, allowed_roles):
-    if user["role"] not in allowed_roles:
-        raise HTTPException(status_code=403, detail="Access denied")
+
+    role = user.get("role")
+
+    # 🔥 Leader inherits admin permissions
+    if role == "leader" and "admin" in allowed_roles:
+        return
+
+    if role not in allowed_roles:
+        raise HTTPException(
+            status_code=403,
+            detail="Permission denied"
+        )
 
 
 # -----------------------------
@@ -260,50 +274,61 @@ def chat_history(user=Depends(verify_token)):
 # LIST USERS (FROM DATABASE)
 # -----------------------------
 @router.get("/admin/users")
-def list_users(user=Depends(verify_token)):
+def get_users(user=Depends(verify_token)):
 
-    require_role(user, ["admin"])
+    role = user.get("role")
+
+    if role not in ["admin", "leader"]:
+        raise HTTPException(status_code=403, detail="Not allowed")
 
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute("SELECT email, role, created_at FROM users")
+    cursor.execute("SELECT name, email, role FROM users")
     users = cursor.fetchall()
 
     conn.close()
 
     return users
 
-
 @router.post("/admin/add-user")
-def add_user(new_user: User, user=Depends(verify_token)):
+def add_user(new_user: UserCreate, user=Depends(verify_token)):
 
-    require_role(user, ["admin"])
+    role = user.get("role")
+
+    # 👑 LEADER → FULL CONTROL
+    if role == "leader":
+        pass
+
+    # 👨‍💼 ADMIN → ONLY USER
+    elif role == "admin":
+        if new_user.role != "user":
+            raise HTTPException(
+                status_code=403,
+                detail="Admin can only create users"
+            )
+
+    else:
+        raise HTTPException(status_code=403, detail="Not allowed")
 
     # -----------------------------
-    # STEP 1: GET NAME
+    # NAME GENERATION
     # -----------------------------
     name = new_user.name
-
-    # -----------------------------
-    # STEP 2: AUTO GENERATE NAME
-    # -----------------------------
     if not name:
-        prefix = new_user.email.split("@")[0]
-
         import re
-        prefix = re.sub(r'\d+', '', prefix)        # remove numbers
-        prefix = re.sub(r'[^a-zA-Z]', '', prefix)  # keep only letters
-
+        prefix = new_user.email.split("@")[0]
+        prefix = re.sub(r'\d+', '', prefix)
+        prefix = re.sub(r'[^a-zA-Z]', '', prefix)
         name = prefix if prefix else "user"
 
     # -----------------------------
-    # STEP 3: HASH PASSWORD
+    # HASH PASSWORD
     # -----------------------------
     hashed = bcrypt.hashpw(new_user.password.encode(), bcrypt.gensalt())
 
     # -----------------------------
-    # STEP 4: INSERT INTO DATABASE
+    # INSERT INTO DB (🔥 FIXED)
     # -----------------------------
     conn = get_connection()
     cursor = conn.cursor()
@@ -311,7 +336,7 @@ def add_user(new_user: User, user=Depends(verify_token)):
     try:
         cursor.execute(
             "INSERT INTO users (name, email, password_hash, role) VALUES (%s,%s,%s,%s)",
-            (name, new_user.email, hashed, new_user.role)
+            (name, new_user.email, hashed, new_user.role)   # ✅ FIX
         )
         conn.commit()
 
@@ -321,33 +346,7 @@ def add_user(new_user: User, user=Depends(verify_token)):
 
     conn.close()
 
-    # -----------------------------
-    # STEP 5: RESPONSE
-    # -----------------------------
     return {"msg": "User added successfully"}
-# -----------------------------
-# Leader Add User
-# -----------------------------
-@router.post("/leader/add-user")
-def leader_add_user(new_user: User, user=Depends(verify_token)):
-
-    require_role(user, ["leader"])
-
-    validate_email(new_user.email)
-
-    if new_user.email in users_db:
-        raise HTTPException(status_code=400, detail="User already exists")
-
-    hashed = bcrypt.hashpw(new_user.password.encode(), bcrypt.gensalt())
-
-    users_db[new_user.email] = {
-        "password": hashed,
-        "role": new_user.role,
-        "created_at": datetime.utcnow(),
-        "last_login": None
-    }
-
-    return {"message": "User added by leader successfully"}
 
 
 # -----------------------------
@@ -369,19 +368,82 @@ def assign_subleader(email: str, user=Depends(verify_token)):
 # -----------------------------
 # Remove User
 # -----------------------------
-# -----------------------------
-# Remove User (Admin Only)
-# -----------------------------
 @router.delete("/admin/remove-user/{email}")
 def remove_user(email: str, user=Depends(verify_token)):
 
-    require_role(user, ["admin"])
+    role = user.get("role")
 
     conn = get_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("SELECT role FROM users WHERE email=%s", (email,))
+    target = cursor.fetchone()
+
+    if not target:
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+
+    target_role = target["role"]
+
+    # 👨‍💼 ADMIN RULES
+    if role == "admin":
+        if target_role in ["admin", "leader"]:
+            conn.close()
+            raise HTTPException(
+                status_code=403,
+                detail="Admin cannot delete admin or leader"
+            )
+
+    # 👑 LEADER RULES
+    elif role == "leader":
+        if target_role == "leader":
+            conn.close()
+            raise HTTPException(
+                status_code=403,
+                detail="Leader cannot delete another leader"
+            )
+
+    else:
+        conn.close()
+        raise HTTPException(status_code=403, detail="Not allowed")
+
+    # ❗ SELF DELETE BLOCK
+    if email == user["email"]:
+        conn.close()
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot delete yourself"
+        )
 
     cursor.execute("DELETE FROM users WHERE email=%s", (email,))
     conn.commit()
     conn.close()
 
     return {"msg": "User deleted successfully"}
+#------------------------------------------------------
+#-------------------------------------------------------
+@router.get("/leader/stats")
+def leader_stats(user=Depends(verify_token)):
+
+    if user.get("role") != "leader":
+        raise HTTPException(status_code=403, detail="Only leader allowed")
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("SELECT COUNT(*) as total FROM users")
+    total = cursor.fetchone()["total"]
+
+    cursor.execute("SELECT COUNT(*) as admins FROM users WHERE role='admin'")
+    admins = cursor.fetchone()["admins"]
+
+    cursor.execute("SELECT COUNT(*) as leaders FROM users WHERE role='leader'")
+    leaders = cursor.fetchone()["leaders"]
+
+    conn.close()
+
+    return {
+        "total_users": total,
+        "admins": admins,
+        "leaders": leaders
+    }

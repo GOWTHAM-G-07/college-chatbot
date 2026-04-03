@@ -1,17 +1,119 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<title>Leader Dashboard</title>
-<link rel="stylesheet" href="style.css">
+  <title>Leader Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
 
-<h1>Leader Dashboard</h1>
+<div class="main">
+  <div class="content">
 
-<p>Welcome Leader</p>
+    <!-- TITLE -->
+    <h1 class="title">Leader Dashboard 👑</h1>
+    <h3 style="text-align:center; color:#94a3b8;">Welcome Leader</h3>
 
-<a href="chat.html">Open Chat</a>
+    <!-- =========================
+         STATS
+    ========================= -->
+    <div class="glass">
+      <h3>📊 Stats</h3>
+      <div id="stats"></div>
+    </div>
+
+    <!-- =========================
+         CARDS
+    ========================= -->
+    <div class="stats">
+      <div class="glass stat-card">
+        <h3>📄 Documents</h3>
+        <h2 id="docCount">0</h2>
+      </div>
+
+      <div class="glass stat-card">
+        <h3>👥 Users</h3>
+        <h2 id="userCount">0</h2>
+      </div>
+    </div>
+
+    <!-- =========================
+         UPLOAD
+    ========================= -->
+    <div class="glass">
+      <h3>Upload PDF</h3>
+      <input id="title" placeholder="Document Title">
+      <input type="file" id="file">
+      <button onclick="uploadDoc()">Upload</button>
+    </div>
+
+    <!-- =========================
+         DOCUMENTS (FULL WIDTH)
+    ========================= -->
+    <div class="glass" style="margin-top:20px;">
+      <h2>Documents</h2>
+      <div id="docs"></div>
+    </div>
+
+    <!-- =========================
+         USERS (TABLE STYLE ✅)
+    ========================= -->
+    <div class="glass" style="margin-top:20px;">
+      <h2>Users</h2>
+
+      <button onclick="loadUsers()">Refresh</button>
+
+      <!-- TABLE HEADER -->
+      <div class="user-table">
+        <div class="user-row user-header">
+          <div>Name</div>
+          <div>Email</div>
+          <div>Role</div>
+          <div style="text-align:right;">Actions</div>
+        </div>
+
+        <!-- USER DATA -->
+        <div id="users"></div>
+      </div>
+    </div>
+
+    <!-- =========================
+         ADD USER (LEADER POWER)
+    ========================= -->
+    <div class="glass" style="margin-top:20px;">
+      <h2>Add User (Leader 👑)</h2>
+
+      <input id="newName" placeholder="Name (optional)">
+      <input id="newEmail" placeholder="Email">
+      <input id="newPassword" placeholder="Password">
+
+      <select id="newRole">
+        <option value="user">User</option>
+        <option value="admin">Admin</option>
+        <option value="leader">Leader</option>
+      </select>
+
+      <button onclick="addUser()">Add User</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- =========================
+     SCRIPTS
+========================= -->
+<script src="layout.js"></script>
+<script src="leader.js"></script>
+
+<script>
+window.onload = () => {
+  loadLayout();
+  loadStats();
+  loadUsers();
+  loadDocs();
+};
+</script>
 
 </body>
 </html>

@@ -32,8 +32,8 @@ async function login(){
     // =========================
     localStorage.setItem("token", data.token);
     localStorage.setItem("role", data.role);
-    localStorage.setItem("email", email); // 🔥 IMPORTANT
-
+    //localStorage.setItem("email", email);  IMPORTANT
+    localStorage.setItem("email", data.email)   // 🔥 ADD THIS
     alert("Login successful");
 
     // =========================

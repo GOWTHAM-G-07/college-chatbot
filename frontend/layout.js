@@ -8,25 +8,33 @@ function loadLayout(){
 
   let buttons = "";
 
-  // =========================
-  // ROLE BASED MENU
-  // =========================
-  if(role === "admin"){
-    buttons = `
-      <button onclick="go('admin.html')">Dashboard</button>
-      <button onclick="go('users.html')">Users</button>
-      <button onclick="go('docs.html')">Documents</button>
-      <button onclick="go('chat.html')">Chat</button>
-    `;
-  }else{
-    buttons = `
-      <button onclick="go('chat.html')">💬 Chat</button>
-      <button onclick="go('documents.html')">📄 Documents</button>
-      <button onclick="go('announcements.html')">📢 Announcements</button>
-      <button onclick="go('news.html')">📰 News</button>
-    `;
-  }
-
+// =========================
+// ROLE BASED MENU
+// =========================
+if(role === "leader"){
+  buttons = `
+    <button onclick="go('leader.html')">Dashboard</button>
+    <button onclick="go('users.html')">Users</button>
+    <button onclick="go('docs.html')">Documents</button>
+    <button onclick="go('chat.html')">Chat</button>
+    <button onclick="go('leader-tools.html')">👑 Leader Tools</button>
+  `;
+}
+else if(role === "admin"){
+  buttons = `
+    <button onclick="go('admin.html')">Dashboard</button>
+    <button onclick="go('users.html')">Users</button>
+    <button onclick="go('docs.html')">Documents</button>
+    <button onclick="go('chat.html')">Chat</button>
+  `;
+}
+else{
+  buttons = `
+    <button onclick="go('chat.html')">💬 Chat</button>
+    <button onclick="go('documents.html')">📄 Documents</button>
+    <button onclick="go('announcements.html')">📢 Announcements</button>
+  `;
+}
   // =========================
   // INSERT SIDEBAR
   // =========================
