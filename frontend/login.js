@@ -2,60 +2,67 @@ const API = "http://127.0.0.1:8000";
 
 async function login(){
 
-const email = document.getElementById("email").value
-const password = document.getElementById("password").value
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
 
-try{
+  try{
 
-const res = await fetch(API + "/auth/login",{
+    const res = await fetch(API + "/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email: email,
+        password: password
+      })
+    });
 
-method:"POST",
+    const data = await res.json();
 
-headers:{
-"Content-Type":"application/json"
-},
+    console.log("LOGIN DATA:", data);
 
-body:JSON.stringify({
-email:email,
-password:password
-})
+    if(!res.ok){
+      alert(data.detail || "Login failed");
+      return;
+    }
 
-})
+    // =========================
+    // STORE SESSION
+    // =========================
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("role", data.role);
+    localStorage.setItem("email", email); // 🔥 IMPORTANT
 
-const data = await res.json()
+    alert("Login successful");
 
-console.log("LOGIN DATA:", data)
+    // =========================
+    // ROLE BASED REDIRECT
+    // =========================
 
-if(!res.ok){
-alert(data.detail)
-return
-}
+    switch(data.role){
 
-localStorage.setItem("token",data.token)
-localStorage.setItem("role",data.role)
+      case "admin":
+        window.location.href = "/static/admin.html";
+        break;
 
-alert("Login successful")
+      case "leader":
+        window.location.href = "/static/leader.html";
+        break;
 
-// ROLE BASED REDIRECT
+      case "subleader":
+        window.location.href = "/static/manager.html";
+        break;
 
-if(data.role === "leader"){
-window.location.href="/static/leader.html"
-}
-else if(data.role === "subleader"){
-window.location.href="/static/manager.html"
-}
-else if(data.role === "admin"){
-window.location.href="/static/admin.html"
-}
-else{
-window.location.href="/static/chat.html"
-}
+      default:
+        window.location.href = "/static/chat.html";
+    }
 
-}catch(error){
+  }catch(error){
 
-console.error(error)
-alert("Cannot connect to backend")
+    console.error("LOGIN ERROR:", error);
+    alert("Cannot connect to backend");
 
-}
+  }
 
 }

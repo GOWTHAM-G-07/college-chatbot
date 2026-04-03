@@ -1,9 +1,9 @@
 from backend.db import get_connection
-from fastapi import APIRouter, HTTPException, Depends, Header
-from fastapi import Request
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 import bcrypt
-import jwt
+from fastapi.security import OAuth2PasswordBearer
+from jose import jwt, JWTError
 import re
 from datetime import datetime, timedelta
 router = APIRouter()
@@ -97,21 +97,14 @@ def validate_email(email: str):
 # Token Verification (🔥 FIXED SAFE VERSION)
 # -------------------------
 
-from fastapi import Request
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-def verify_token(request: Request):
-
-    auth_header = request.headers.get("Authorization")
-
-    if not auth_header:
-        raise HTTPException(status_code=401, detail="Missing token")
-
-    token = auth_header.replace("Bearer ", "")
-
+def verify_token(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
-    except Exception:
+
+    except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 # -----------------------------
 # Role Permission Helper

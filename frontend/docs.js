@@ -1,90 +1,60 @@
-const API="http://127.0.0.1:8000"
+const API = "http://127.0.0.1:8000";
 
-async function ocs(){
+async function loadDocs() {
+  try {
+    const token = localStorage.getItem("token");
 
-let res = await fetch(API+"/admin/docs")
+    const res = await fetch(API + "/admin/docs", {
+      headers: {
+        "Authorization": "Bearer " + token
+      }
+    });
 
-let docs = await res.json()
+    if (!res.ok) {
+      console.error("API error:", res.status);
+      return;
+    }
 
-let container=document.getElementById("docs")
+    const result = await res.json();
 
-container.innerHTML=""
+    console.log("DOC RESPONSE:", result);
 
-docs.forEach(doc=>{
+    // HANDLE ALL CASES
+    const docs = result.docs || result.documents || result;
 
-container.innerHTML+=`
+    const container = document.getElementById("docs");
+    container.innerHTML = "";
 
-<div class="item">
+    if (!docs || docs.length === 0) {
+      container.innerHTML = "<p>No documents found</p>";
+      return;
+    }
 
-<div>
+    docs.forEach(doc => {
+      const div = document.createElement("div");
+      div.className = "item";
 
-<b>${doc.title}</b><br>
-${doc.filename}
+      div.innerHTML = `
+        <div>
+          <b>${doc.title || doc.filename || "Document"}</b><br>
+          ${doc.filename || ""}
+        </div>
 
-</div>
+        <div>
+          <a href="${API}/documents/preview/${doc.id}" target="_blank">
+            <button>Preview</button>
+          </a>
 
-<div>
+          <a href="${API}/documents/download/${doc.id}">
+            <button>Download</button>
+          </a>
+        </div>
+      `;
 
-<a href="/documents/preview/${doc.id}" target="_blank">
-<button>Preview</button>
-</a>
+      container.appendChild(div);
+    });
 
-<a href="/documents/download/${doc.id}">
-<button>Download</button>
-</a>
-
-</div>
-
-</div>
-
-`
-
-})
-
-}
-async function ocs(){
-
-let res = await fetch(API+"/admin/docs",{
-headers:{
-Authorization:"Bearer "+localStorage.getItem("token")
-}
-})
-
-let docs = await res.json()
-
-let container=document.getElementById("docs")
-
-container.innerHTML=""
-
-docs.forEach(doc=>{
-
-container.innerHTML+=`
-
-<div class="item">
-
-<div>
-
-<b>${doc.title}</b><br>
-${doc.filename}
-
-</div>
-
-<div>
-
-<a href="/documents/preview/${doc.id}" target="_blank">
-<button>Preview</button>
-</a>
-
-<a href="/documents/download/${doc.id}">
-<button>Download</button>
-</a>
-
-</div>
-
-</div>
-
-`
-
-})
-
+  } catch (err) {
+    console.error("Error:", err);
+  }
 }

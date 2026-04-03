@@ -1,52 +1,85 @@
 function loadLayout(){
 
-// prevent duplicate
-if(document.querySelector(".sidebar")) return
+  // prevent duplicate sidebar
+  if(document.querySelector(".sidebar")) return;
 
-document.body.insertAdjacentHTML("afterbegin",`
+  const role = localStorage.getItem("role") || "user";
+  const email = localStorage.getItem("email") || "User";
 
-<div class="sidebar">
+  let buttons = "";
 
-<h3 id="username">User</h3>
-<p id="role">Role</p>
+  // =========================
+  // ROLE BASED MENU
+  // =========================
+  if(role === "admin"){
+    buttons = `
+      <button onclick="go('admin.html')">Dashboard</button>
+      <button onclick="go('users.html')">Users</button>
+      <button onclick="go('docs.html')">Documents</button>
+      <button onclick="go('chat.html')">Chat</button>
+    `;
+  }else{
+    buttons = `
+      <button onclick="go('chat.html')">💬 Chat</button>
+      <button onclick="go('documents.html')">📄 Documents</button>
+      <button onclick="go('announcements.html')">📢 Announcements</button>
+      <button onclick="go('news.html')">📰 News</button>
+    `;
+  }
 
-<button onclick="go('chat.html')">💬 Chat</button>
-<button onclick="go('documents.html')">📄 Documents</button>
-<button onclick="go('announcements.html')">📢 Announcements</button>
-<button onclick="go('news.html')">📰 News</button>
+  // =========================
+  // INSERT SIDEBAR
+  // =========================
+  document.body.insertAdjacentHTML("afterbegin",`
+    <div class="sidebar">
 
-<button class="logout" onclick="logout()">🚪 Logout</button>
+      <div class="profile">
+        <h3>${email}</h3>
+        <p>${role}</p>
+      </div>
 
-</div>
+      ${buttons}
 
-<canvas id="bgCanvas"></canvas>
+      <button class="logout" onclick="logout()">🚪 Logout</button>
 
-`)
+    </div>
 
-// set user info
-setTimeout(()=>{
-document.getElementById("username").innerText =
-localStorage.getItem("email") || "User"
+    <canvas id="bgCanvas"></canvas>
+  `);
 
-document.getElementById("role").innerText =
-localStorage.getItem("role") || "Role"
-},100)
+  // =========================
+  // ACTIVE BUTTON HIGHLIGHT
+  // =========================
+  const currentPage = window.location.pathname;
 
-}
+  document.querySelectorAll(".sidebar button").forEach(btn => {
+    const onclick = btn.getAttribute("onclick");
 
-/* navigation */
-function go(page){
-window.location.href="/static/"+page
-}
+    if(onclick && currentPage.includes(onclick.split("'")[1])){
+      btn.classList.add("active");
+    }
 
-/* logout */
-function logout(){
-localStorage.clear()
-location.href="/static/login.html"
-}
-document.querySelectorAll(".sidebar button").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".sidebar button").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".sidebar button")
+        .forEach(b => b.classList.remove("active"));
+
+      btn.classList.add("active");
+    });
   });
-});
+
+}
+
+/* =========================
+   NAVIGATION
+========================= */
+function go(page){
+  window.location.href = "/static/" + page;
+}
+
+/* =========================
+   LOGOUT
+========================= */
+function logout(){
+  localStorage.clear();
+  window.location.href = "/static/login.html";
+}

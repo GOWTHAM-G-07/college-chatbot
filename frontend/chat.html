@@ -1,136 +1,162 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>College Chatbot</title>
-<link rel="stylesheet" href="style.css">
+  <title>College Chatbot</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
+<!-- =========================
+     MAIN CONTENT
+========================= -->
 <div class="main">
 
-  <!-- TOP -->
-  <h1 style="text-align:center;">College Chatbot</h1>
+  <div class="content">
 
-  <!-- AI STATUS -->
-  <div id="aiStatus" style="text-align:center; margin-bottom:10px; color:#00d4ff;">
-    🧠 AI Active
-  </div>
+    <!-- TITLE -->
+    <div class="title">College Chatbot</div>
+    <div id="aiStatus" class="subtitle">🧠 AI Active</div>
 
-  <!-- MODE TOGGLE -->
-  <div class="mode-toggle" style="display:flex; justify-content:center; gap:10px; margin-bottom:15px;">
-    <button id="aiBtn" class="active">AI Mode</button>
-    <button id="docBtn">Document Mode</button>
-  </div>
+    <!-- MODE -->
+    <div style="text-align:center; margin-bottom:15px;">
+      <button id="aiBtn" class="active">AI Mode</button>
+      <button id="docBtn">Document Mode</button>
+    </div>
 
-  <!-- CHAT CARD -->
-  <div class="glass chat-container">
+    <!-- CHAT BOX -->
+    <div class="glass">
 
-    <div id="chatBox" class="chat-box"></div>
+      <div id="chatBox" style="height:300px; overflow-y:auto; margin-bottom:10px;"></div>
 
-    <div class="chat-input">
-      <input id="question" placeholder="Ask something...">
-      <button onclick="sendQuestion()">Send</button>
+      <div style="display:flex;">
+        <input id="question" placeholder="Ask something..." style="flex:1;">
+        <button onclick="sendQuestion()">Send</button>
+      </div>
+
+    </div>
+
+    <!-- DOCUMENTS -->
+    <div class="glass">
+      <h3>Available Documents</h3>
+      <div id="docs"></div>
     </div>
 
   </div>
 
-  <!-- DOCUMENTS -->
-  <div class="glass" style="margin-top:20px;">
-    <h3>Available Documents</h3>
-    <div id="docs" class="docs"></div>
-  </div>
-
 </div>
 
-<script src="chat.js"></script>
+<!-- =========================
+     SCRIPTS (IMPORTANT ORDER)
+========================= -->
+<script src="layout.js"></script>
 <script src="docs.js"></script>
 
 <script>
-loadDocs()
-</script>
+window.onload = () => {
 
-<script>
+  // ✅ Load sidebar (role-based)
+  loadLayout();
 
-/* =========================
-   MODE SYSTEM
-========================= */
+  // ✅ Load documents
+  loadDocs();
 
-let currentMode = "ai";
+  // =========================
+  // MODE SYSTEM
+  // =========================
+  let currentMode = "ai";
 
-const aiBtn = document.getElementById("aiBtn");
-const docBtn = document.getElementById("docBtn");
-const status = document.getElementById("aiStatus");
+  const aiBtn = document.getElementById("aiBtn");
+  const docBtn = document.getElementById("docBtn");
+  const status = document.getElementById("aiStatus");
 
-aiBtn.onclick = () => {
-  currentMode = "ai";
-  updateMode();
-};
+  aiBtn.onclick = () => {
+    currentMode = "ai";
+    updateMode();
+  };
 
-docBtn.onclick = () => {
-  currentMode = "doc";
-  updateMode();
-};
+  docBtn.onclick = () => {
+    currentMode = "doc";
+    updateMode();
+  };
 
-function updateMode() {
-  aiBtn.classList.remove("active");
-  docBtn.classList.remove("active");
+  function updateMode() {
+    aiBtn.classList.remove("active");
+    docBtn.classList.remove("active");
 
-  if (currentMode === "ai") {
-    aiBtn.classList.add("active");
-    status.innerText = "🧠 AI Active";
-  } else {
-    docBtn.classList.add("active");
-    status.innerText = "📄 Document Mode";
+    if (currentMode === "ai") {
+      aiBtn.classList.add("active");
+      status.innerText = "🧠 AI Active";
+    } else {
+      docBtn.classList.add("active");
+      status.innerText = "📄 Document Mode";
+    }
   }
-}
 
-/* =========================
-   MODIFY SEND FUNCTION
-========================= */
+  // =========================
+  // SEND QUESTION
+  // =========================
+  window.sendQuestion = async function () {
 
-async function sendQuestion() {
+    const input = document.getElementById("question");
+    const question = input.value;
 
-  let input = document.getElementById("question");
-  let question = input.value;
+    if (!question) return;
 
-  if (!question) return;
+    addMessage(question, "user");
+    input.value = "";
 
-  addMessage(question, "question");
+    try {
+      const res = await fetch("http://127.0.0.1:8000/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + localStorage.getItem("token")
+        },
+        body: JSON.stringify({
+          question: question,
+          mode: currentMode
+        })
+      });
 
-  input.value = "";
+      const data = await res.json();
 
-  let res = await fetch("http://127.0.0.1:8000/chat", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      question: question,
-      mode: currentMode   // 🔥 IMPORTANT
-    })
-  });
+      addMessage(data.answer || "No response", "bot");
 
-  let data = await res.json();
+    } catch (err) {
+      console.error(err);
+      addMessage("Server error", "bot");
+    }
+  };
 
-  addMessage(data.answer, "answer");
-}
+  // =========================
+  // MESSAGE UI
+  // =========================
+  function addMessage(text, type) {
+    const box = document.getElementById("chatBox");
 
-/* =========================
-   MESSAGE UI
-========================= */
+    const div = document.createElement("div");
 
-function addMessage(text, type) {
-  let box = document.getElementById("chatBox");
+    div.style.margin = "6px";
+    div.style.padding = "8px";
+    div.style.borderRadius = "8px";
 
-  let div = document.createElement("div");
-  div.className = type + " message";
-  div.innerText = text;
+    if (type === "user") {
+      div.style.background = "#38bdf8";
+      div.style.color = "black";
+      div.style.textAlign = "right";
+    } else {
+      div.style.background = "#22c55e";
+      div.style.color = "black";
+    }
 
-  box.appendChild(div);
-  box.scrollTop = box.scrollHeight;
-}
+    div.innerText = text;
 
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+  }
+
+};
 </script>
 
 </body>
