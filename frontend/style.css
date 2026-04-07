@@ -390,3 +390,16 @@ button:hover{
 .user-row select option {
   color: black;
 }
+/*-------------------------------------------------------------------*/
+select {
+  background: #1e293b;
+  color: #fff;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+select option {
+  background: #0f172a;
+  color: #fff;
+}

@@ -262,3 +262,53 @@ async function deleteDoc(id){
     console.error("Delete doc error:", err);
   }
 }
+/* =========================
+   ADD USER (LEADER)
+========================= */
+async function addUser() {
+
+  const name = document.getElementById("newName").value;
+  const email = document.getElementById("newEmail").value;
+  const password = document.getElementById("newPassword").value;
+  const role = document.getElementById("newRole").value;
+
+  if (!email || !password) {
+    alert("Email and password required");
+    return;
+  }
+
+  try {
+    const res = await fetch(API + "/auth/admin/add-user", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + localStorage.getItem("token")
+      },
+      body: JSON.stringify({
+        name,
+        email,
+        password,
+        role
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.detail || "Failed to add user");
+      return;
+    }
+
+    alert("User added successfully");
+
+    // clear inputs
+    document.getElementById("newName").value = "";
+    document.getElementById("newEmail").value = "";
+    document.getElementById("newPassword").value = "";
+
+    loadUsers();
+
+  } catch (err) {
+    console.error("Add user error:", err);
+  }
+}
