@@ -217,29 +217,47 @@ function downloadDoc(path) {
 /*==========================
 user count update
 ==============================*/
+let allUsers = [];
 async function loadUsers() {
-
-  const token = localStorage.getItem("token");
-
   try {
-    let res = await fetch(API + "/auth/admin/users", {
+    const res = await fetch("/auth/admin/users", {
       headers: {
-        Authorization: "Bearer " + token
+        Authorization: "Bearer " + localStorage.getItem("token")
       }
     });
 
-    let users = await res.json();
-
-    console.log("USERS RESPONSE:", users);
-
-    // 🔥 FIX: ensure it's array
-    if (!Array.isArray(users)) {
-      console.error("Users not array:", users);
-      document.getElementById("userCount").innerText = 0;
+    if (res.status === 401) {
+      window.location.href = "/login.html";
       return;
     }
 
-    document.getElementById("userCount").innerText = users.length;
+    const users = await res.json();
+
+    if (!Array.isArray(users)) {
+      console.error(users);
+      return;
+    }
+
+    const container = document.getElementById("users");
+    container.innerHTML = "";
+
+    // HEADER
+    container.innerHTML += `
+      <div class="user-row user-header">
+        <div>Name</div>
+        <div>Email</div>
+      </div>
+    `;
+
+    // DATA
+    users.forEach(u => {
+      container.innerHTML += `
+        <div class="user-row">
+          <div>${u.name || "N/A"}</div>
+          <div class="user-email">${u.email}</div>
+        </div>
+      `;
+    });
 
   } catch (err) {
     console.error(err);

@@ -60,24 +60,15 @@
          USERS (TABLE STYLE ✅)
     ========================= -->
     <div class="glass" style="margin-top:20px;">
-      <h2>Users</h2>
+  <h2>Users</h2>
 
-      <button onclick="loadUsers()">Refresh</button>
+  <input id="searchUser" placeholder="Search users..." onkeyup="filterUsers()" />
 
-      <!-- TABLE HEADER -->
-      <div class="user-table">
-        <div class="user-row user-header">
-          <div>Name</div>
-          <div>Email</div>
-          <div>Role</div>
-          <div style="text-align:right;">Actions</div>
-        </div>
+  <div class="user-table">
 
-        <!-- USER DATA -->
-        <div id="users"></div>
-      </div>
-    </div>
-
+    <div id="users"></div>
+  </div>
+</div>
     <!-- =========================
          ADD USER (LEADER POWER)
     ========================= -->
@@ -108,7 +99,8 @@
 
 <script>
 window.onload = () => {
-
+  // 🔥 ADD THIS HERE
+  const role = localStorage.getItem("role");
   if (!localStorage.getItem("token")) {
     window.location.href = "/static/login.html";
     return;

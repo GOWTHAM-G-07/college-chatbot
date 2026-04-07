@@ -424,27 +424,54 @@ def remove_user(email: str, user=Depends(verify_token)):
 #------------------------------------------------------
 #-------------------------------------------------------
 @router.get("/leader/stats")
-def leader_stats(user=Depends(verify_token)):
-
-    if user.get("role") != "leader":
-        raise HTTPException(status_code=403, detail="Only leader allowed")
+def get_stats(user=Depends(verify_token)):
 
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute("SELECT COUNT(*) as total FROM users")
+    # 🔢 TOTAL MEMBERS (all roles)
+    cursor.execute("SELECT COUNT(*) AS total FROM users")
     total = cursor.fetchone()["total"]
 
-    cursor.execute("SELECT COUNT(*) as admins FROM users WHERE role='admin'")
+    # 👤 USERS (students)
+    cursor.execute("SELECT COUNT(*) AS users FROM users WHERE role='user'")
+    users = cursor.fetchone()["users"]
+
+    # 🛡️ ADMINS
+    cursor.execute("SELECT COUNT(*) AS admins FROM users WHERE role='admin'")
     admins = cursor.fetchone()["admins"]
 
-    cursor.execute("SELECT COUNT(*) as leaders FROM users WHERE role='leader'")
+    # 👑 LEADERS
+    cursor.execute("SELECT COUNT(*) AS leaders FROM users WHERE role='leader'")
     leaders = cursor.fetchone()["leaders"]
 
+    cursor.close()
     conn.close()
 
     return {
-        "total_users": total,
+        "total": total,
+        "users": users,
         "admins": admins,
         "leaders": leaders
     }
+@router.put("/leader/update-role")
+def update_role(data: dict, user=Depends(verify_token)):
+
+    # 🔐 Only leader allowed
+    if user["role"] != "leader":
+        raise HTTPException(status_code=403, detail="Only leader can change roles")
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "UPDATE users SET role=%s WHERE email=%s",
+        (data["role"], data["email"])
+    )
+
+    conn.commit()   # 🔥 VERY IMPORTANT
+
+    cursor.close()
+    conn.close()
+
+    return {"message": "Role updated"}

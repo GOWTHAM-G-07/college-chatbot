@@ -372,3 +372,21 @@ button:hover{
   border-bottom: 2px solid rgba(255,255,255,0.2);
   margin-bottom: 5px;
 }
+/*================================*/
+/* 🔥 ROLE DROPDOWN FIX */
+/* ROLE DROPDOWN */
+.user-row select {
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+}
+
+/* Dropdown options */
+.user-row select option {
+  color: black;
+}
