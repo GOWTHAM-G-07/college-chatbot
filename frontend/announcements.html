@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>DGCT Announcements</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/announcement.css">
+</head>
+
+<body>
+
+<div class="main">
+  <div class="content">
+
+    <!-- HEADER -->
+    <div class="portal-header">
+      <div class="left">
+        <div class="logo">DG</div>
+        <div>
+          <h2>DGCT Announcement Portal</h2>
+          <p>Official notice board — all departments</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div id="todayDate"></div>
+        <div>Academic year 2025–26</div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats">
+      <div class="stat-card exam">Exams<br><span id="examCount">0</span></div>
+      <div class="stat-card event">Events<br><span id="eventCount">0</span></div>
+      <div class="stat-card admin">Admin<br><span id="adminCount">0</span></div>
+      <div class="stat-card urgent">Urgent<br><span id="urgentCount">0</span></div>
+      <div class="stat-card general">General<br><span id="generalCount">0</span></div>
+    </div>
+
+    <!-- FILTER -->
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filter('all',this)">All</button>
+      <button class="filter-btn" onclick="filter('exam',this)">● Exams</button>
+      <button class="filter-btn" onclick="filter('event',this)">● Events</button>
+      <button class="filter-btn" onclick="filter('admin',this)">● Admin</button>
+      <button class="filter-btn" onclick="filter('urgent',this)">● Urgent</button>
+      <button class="filter-btn" onclick="filter('general',this)">● General</button>
+    </div>
+
+    <!-- ANNOUNCEMENTS -->
+    <div id="cards"></div>
+
+  </div>
+</div>
+
+<script src="/static/announcements.js"></script>
+
+</body>
+</html>

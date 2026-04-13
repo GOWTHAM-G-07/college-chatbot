@@ -9,6 +9,7 @@ from backend.documents import router as documents_router
 from backend.dashboard import router as dashboard_router
 from backend.vector_store import rebuild_index
 from backend.search import search_docs
+from backend.announcements import router as announcement_router
 from dotenv import load_dotenv
 from backend.llm import generate_answer
 from backend.vector_store import semantic_search
@@ -43,7 +44,7 @@ app.include_router(auth_router, prefix="/auth")
 app.include_router(chat_router)
 app.include_router(documents_router)   # 🔥 contains upload/docs/delete
 app.include_router(dashboard_router)
-
+app.include_router(announcement_router, prefix="/api")
 # -----------------------------
 # Static Files
 # -----------------------------

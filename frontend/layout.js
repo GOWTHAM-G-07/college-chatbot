@@ -13,6 +13,7 @@ function loadLayout() {
       <button onclick="go('leader.html')">Dashboard</button>
       <button onclick="scrollToSection('users')">Users</button>
       <button onclick="scrollToSection('docs')">Documents</button>
+      <button onclick="go('announcements.html')">📢 Announcements</button>
       <button onclick="go('chat.html')">Chat</button>
       <button onclick="go('leader-tools.html')">👑 Leader Tools</button>
     `;
@@ -22,6 +23,7 @@ function loadLayout() {
       <button onclick="go('admin.html')">Dashboard</button>
       <button onclick="scrollToSection('users')">Users</button>
       <button onclick="scrollToSection('docs')">Documents</button>
+      <button onclick="go('announcements.html')">📢 Announcements</button>
       <button onclick="go('chat.html')">Chat</button>
     `;
   }
