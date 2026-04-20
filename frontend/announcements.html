@@ -1,18 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>DGCT Announcements</title>
+  <title>Announcements</title>
   <link rel="stylesheet" href="/static/style.css">
-  <link rel="stylesheet" href="/static/announcement.css">
 </head>
 
 <body>
 
+<div class="sidebar">
+
+  <div class="profile">
+    <h3 id="userEmail"></h3>
+    <p id="userRole"></p>
+  </div>
+
+  <button onclick="goTo('leader.html')">Dashboard</button>
+  <button onclick="goTo('users.html')">Users</button>
+  <button onclick="goTo('documents.html')">Documents</button>
+  <button class="active" onclick="goTo('announcements.html')">📢 Announcements</button>
+  <button onclick="goTo('chat.html')">Chat</button>
+  <button onclick="logout()">Logout</button>
+
+</div>
+
 <div class="main">
+
   <div class="content">
 
+    <h1 class="title">📢 Announcements</h1>
+
     <!-- HEADER -->
-    <div class="portal-header">
+    <div class="portal-header glass">
       <div class="left">
         <div class="logo">DG</div>
         <div>
@@ -21,35 +39,36 @@
         </div>
       </div>
 
-      <div class="right">
-        <div id="todayDate"></div>
-        <div>Academic year 2025–26</div>
+      <div>
+        <span id="todayDate"></span><br>
+        Academic year 2025–26
       </div>
     </div>
 
     <!-- STATS -->
     <div class="stats">
-      <div class="stat-card exam">Exams<br><span id="examCount">0</span></div>
-      <div class="stat-card event">Events<br><span id="eventCount">0</span></div>
-      <div class="stat-card admin">Admin<br><span id="adminCount">0</span></div>
-      <div class="stat-card urgent">Urgent<br><span id="urgentCount">0</span></div>
-      <div class="stat-card general">General<br><span id="generalCount">0</span></div>
+      <div class="stat-card exam">Exams <div id="examCount">0</div></div>
+      <div class="stat-card event">Events <div id="eventCount">0</div></div>
+      <div class="stat-card admin">Admin <div id="adminCount">0</div></div>
+      <div class="stat-card urgent">Urgent <div id="urgentCount">0</div></div>
+      <div class="stat-card general">General <div id="generalCount">0</div></div>
     </div>
 
     <!-- FILTER -->
     <div class="filter-bar">
-      <button class="filter-btn active" onclick="filter('all',this)">All</button>
-      <button class="filter-btn" onclick="filter('exam',this)">● Exams</button>
-      <button class="filter-btn" onclick="filter('event',this)">● Events</button>
-      <button class="filter-btn" onclick="filter('admin',this)">● Admin</button>
-      <button class="filter-btn" onclick="filter('urgent',this)">● Urgent</button>
-      <button class="filter-btn" onclick="filter('general',this)">● General</button>
+      <button class="filter-btn active" onclick="filter('all', this)">All</button>
+      <button class="filter-btn" onclick="filter('exam', this)">• Exams</button>
+      <button class="filter-btn" onclick="filter('event', this)">• Events</button>
+      <button class="filter-btn" onclick="filter('admin', this)">• Admin</button>
+      <button class="filter-btn" onclick="filter('urgent', this)">• Urgent</button>
+      <button class="filter-btn" onclick="filter('general', this)">• General</button>
     </div>
 
-    <!-- ANNOUNCEMENTS -->
+    <!-- CARDS -->
     <div id="cards"></div>
 
   </div>
+
 </div>
 
 <script src="/static/announcements.js"></script>

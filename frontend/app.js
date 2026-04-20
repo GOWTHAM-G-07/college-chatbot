@@ -27,7 +27,6 @@ return
 }
 
 localStorage.setItem("token", d.token)
-localStorage.setItem("role", d.role)
 
 if(d.role === "admin"){
 location.href = "/static/admin.html"
@@ -81,12 +80,12 @@ let formData = new FormData()
 formData.append("title",title)
 formData.append("file",file)
 
-let res = await fetch("/admin/upload",{
-method:"POST",
-headers:{
-Authorization:"Bearer "+localStorage.getItem("token")
-},
-body:formData
+let res = await fetch("http://127.0.0.1:8000/admin/upload",{
+    method:"POST",
+    headers:{
+        Authorization:"Bearer "+localStorage.getItem("token")
+    },
+    body: formData
 })
 
 let data = await res.json()

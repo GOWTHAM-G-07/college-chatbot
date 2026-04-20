@@ -454,6 +454,12 @@ def get_stats(user=Depends(verify_token)):
         "admins": admins,
         "leaders": leaders
     }
+@router.get("/me")
+def get_me(user=Depends(verify_token)):
+    return {
+        "email": user["email"],
+        "role": user["role"]
+    }
 @router.put("/leader/update-role")
 def update_role(data: dict, user=Depends(verify_token)):
 

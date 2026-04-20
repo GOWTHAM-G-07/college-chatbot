@@ -102,6 +102,21 @@ function copyText(text){
   navigator.clipboard.writeText(text);
   alert("Copied");
 }
+// =========================
+// NAVIGATION
+// =========================
+function goTo(page){
+  window.location.href = "/static/" + page;
+}
+
+// =========================
+// LOGOUT
+// =========================
+function logout(){
+  localStorage.removeItem("token");
+  localStorage.removeItem("role");
+  window.location.href = "/static/login.html";
+}
 
 // INIT
 loadAnnouncements();
