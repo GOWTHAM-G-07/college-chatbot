@@ -117,6 +117,5 @@ function logout(){
   localStorage.removeItem("role");
   window.location.href = "/static/login.html";
 }
-
 // INIT
 loadAnnouncements();

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Leader Tools</title>
+
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+<div class="main">
+
+    <div class="content">
+
+        <h1 class="title">👑 Leader Tools</h1>
+
+        <p class="subtitle">
+            Super Admin Control Panel
+        </p>
+
+        <div class="glass">
+
+            <h2>👥 User Management</h2>
+
+            <p>
+                Manage users, administrators and leaders.
+            </p>
+
+            <button onclick="go('leader.html')">
+                👥 Manage Users
+            </button>
+
+        </div>
+
+
+        <div class="glass">
+
+            <h2>📢 Announcement Management</h2>
+
+            <p>
+                Create and approve college announcements.
+            </p>
+
+            <button onclick="go('announcements.html')">
+                📢 Announcements
+            </button>
+
+        </div>
+
+
+        <div class="glass">
+
+            <h2>📄 Document Management</h2>
+
+            <p>
+                Manage uploaded college documents.
+            </p>
+
+            <button onclick="go('documents.html')">
+                📄 Documents
+            </button>
+
+        </div>
+
+
+        <div class="glass">
+
+            <h2>💬 AI Chatbot</h2>
+
+            <p>
+                Open the college AI assistant.
+            </p>
+
+            <button onclick="go('chat.html')">
+                💬 Open Chat
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+function go(page) {
+    window.location.href = "/static/" + page;
+}
+
+</script>
+
+</body>
+</html>
